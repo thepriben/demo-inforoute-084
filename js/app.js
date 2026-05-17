@@ -13,6 +13,45 @@
             veloroute: 3
         };
 
+        function geoJsonLineFeatureToWay(feature) {
+            if (!feature?.geometry || feature.geometry.type !== 'LineString') return null;
+
+            const properties = { ...(feature.properties || {}) };
+            const geometry = feature.geometry.coordinates
+                .filter(coord => Array.isArray(coord) && coord.length >= 2)
+                .map(([lon, lat]) => ({ lat, lon }));
+
+            if (geometry.length < 2) return null;
+
+            return {
+                type: 'way',
+                id: properties.osm_id,
+                tags: properties,
+                geometry,
+                hasRelation: properties.has_relation === true,
+                relationId: properties.relation_id,
+                relationTags: properties.relation_tags || null
+            };
+        }
+
+        function geoJsonPolygonGeometryToLatLngRings(geometry) {
+            if (!geometry) return [];
+
+            if (geometry.type === 'Polygon') {
+                const outerRing = geometry.coordinates?.[0] || [];
+                return [outerRing.map(([lon, lat]) => [lat, lon])];
+            }
+
+            if (geometry.type === 'MultiPolygon') {
+                return geometry.coordinates
+                    .map(polygon => polygon?.[0] || [])
+                    .filter(ring => ring.length > 0)
+                    .map(ring => ring.map(([lon, lat]) => [lat, lon]));
+            }
+
+            return [];
+        }
+
         function toggleQualityPanel() {
             const panel = document.getElementById('qualityPanel');
             const btn = document.querySelector('button[onclick="toggleQualityPanel()"]');
@@ -709,40 +748,19 @@
         window.shadowPolylines = {}; // Polylines d'ombre pour les routes mises en évidence (par ref, global)
 
         async function loadDepartmentalRoads() {
-            // Construire la requête Overpass pour récupérer toutes les routes départementales du Vaucluse
-            const overpassQuery = `
-                [out:json][timeout:60];
-                area["ISO3166-2"="FR-84"]->.dept;
-                (
-                  way(area.dept)["highway"]["ref"~"^D ?[0-9]+$"];
-                  relation(area.dept)["type"="route"]["route"="road"]["ref"~"^D ?[0-9]+$"];
-                );
-                out geom;
-                out tags;
-            `;
-
             try {
-                const data = await window.InforouteApi.fetchOverpass('departmental-roads', overpassQuery);
+                const data = await window.InforouteApi.fetchGeoJson('departmental-roads');
                 routesLoadingPopup.remove();
 
-                if (data.elements && data.elements.length > 0) {
-                    console.log(`✓ ${data.elements.length} éléments chargés depuis OpenStreetMap`);
+                if (data.features && data.features.length > 0) {
+                    console.log(`✓ ${data.features.length} tronçons chargés depuis le GeoJSON OSM`);
 
-                    // Séparer les ways et les relations
-                    const ways = data.elements.filter(e => e.type === 'way');
-                    const relations = data.elements.filter(e => e.type === 'relation');
+                    const ways = data.features
+                        .map(geoJsonLineFeatureToWay)
+                        .filter(Boolean);
                     
                     console.log(`  - ${ways.length} ways (tronçons)`);
-                    console.log(`  - ${relations.length} relations`);
-
-                    // Créer un index des relations par référence de route
-                    const relationsByRef = {};
-                    relations.forEach(rel => {
-                        if (rel.tags && rel.tags.ref) {
-                            const ref = rel.tags.ref.replace(/\s+/g, '').replace(/^D/, 'D');
-                            relationsByRef[ref] = rel;
-                        }
-                    });
+                    console.log(`  - relations attachées aux propriétés GeoJSON`);
 
                     // Organiser les routes par référence
                     const routesByRef = {};
@@ -754,14 +772,6 @@
                             if (!routesByRef[ref]) {
                                 routesByRef[ref] = [];
                             }
-                            
-                            // Ajouter l'info de relation si elle existe
-                            if (relationsByRef[ref]) {
-                                way.hasRelation = true;
-                                way.relationId = relationsByRef[ref].id;
-                                way.relationTags = relationsByRef[ref].tags;
-                            }
-                            
                             routesByRef[ref].push(way);
                         }
                     });
@@ -1721,27 +1731,14 @@
             }
             
             try {
-                const data = await window.InforouteApi.fetchCommuneBoundary(communeName);
+                const communeFeature = await window.InforouteApi.fetchCommuneBoundary(communeName);
                 
-                if (data.elements && data.elements.length > 0) {
-                    const communeRelation = data.elements[0];
+                if (communeFeature) {
+                    const communeRings = geoJsonPolygonGeometryToLatLngRings(communeFeature.geometry);
                     
-                    // Construire le polygone de la commune
-                    const communeCoords = [];
-                    if (communeRelation.members) {
-                        const outerMembers = communeRelation.members.filter(m => m.role === 'outer');
-                        outerMembers.forEach(member => {
-                            if (member.geometry) {
-                                member.geometry.forEach(point => {
-                                    communeCoords.push([point.lat, point.lon]);
-                                });
-                            }
-                        });
-                    }
-                    
-                    if (communeCoords.length > 0) {
+                    if (communeRings.length > 0) {
                         // Créer le polygone de la commune (temporaire, invisible)
-                        const communePolygon = L.polygon(communeCoords, {
+                        const communePolygon = L.polygon(communeRings, {
                             color: 'transparent',
                             fillOpacity: 0
                         });
@@ -1757,7 +1754,7 @@
                                 // Vérifier si au moins un point de la polyline est dans la commune
                                 const hasIntersection = coords.some(coord => {
                                     const point = L.latLng(coord);
-                                    return isPointInPolygon(point, communeCoords);
+                                    return communeRings.some(ring => isPointInPolygon(point, ring));
                                 });
                                 
                                 if (hasIntersection) {
@@ -1839,8 +1836,8 @@
                         }
                     }
                 } else {
-                    // Fallback si la commune n'est pas trouvée via Overpass
-                    console.warn(`Commune ${communeName} non trouvée via Overpass`);
+                    // Fallback si la commune n'est pas trouvée dans le GeoJSON
+                    console.warn(`Commune ${communeName} non trouvée dans le GeoJSON`);
                     zoomToCommuneFallback(communeName);
                 }
             } catch (error) {
@@ -1850,23 +1847,22 @@
             }
         }
         
-        // Fonction de secours pour zoomer sur la commune via géocodage
+        // Fonction de secours pour zoomer sur la commune via le GeoJSON local
         async function zoomToCommuneFallback(communeName) {
             try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(communeName)},Vaucluse,France&limit=1`);
-                const data = await response.json();
+                const communeFeature = await window.InforouteApi.fetchCommuneBoundary(communeName);
+                const communeRings = geoJsonPolygonGeometryToLatLngRings(communeFeature?.geometry);
                 
-                if (data && data.length > 0) {
-                    const lat = parseFloat(data[0].lat);
-                    const lon = parseFloat(data[0].lon);
-                    
-                    map.setView([lat, lon], 14, {
+                if (communeRings.length > 0) {
+                    const bounds = L.latLngBounds(communeRings.flat());
+                    map.fitBounds(bounds, {
+                        padding: [80, 80],
                         animate: true,
                         duration: 1
                     });
                 }
             } catch (error) {
-                console.error('Erreur lors du géocodage:', error);
+                console.error('Erreur lors du zoom GeoJSON commune:', error);
             }
         }
         
@@ -2368,50 +2364,26 @@
             try {
                 console.log('🚧 === CHARGEMENT ROUTES EN CONSTRUCTION ===');
                 
-                // Requête Overpass ÉLARGIE pour routes en construction
-                // Recherche dans le Vaucluse ET sa périphérie (bbox élargi)
-                const overpassQuery = `
-                    [out:json][timeout:60];
-                    (
-                      // Recherche dans le département 84
-                      area["ISO3166-2"="FR-84"]->.dept;
-                      
-                      // Routes en construction (tous types)
-                      way(area.dept)["highway"="construction"];
-                      way(area.dept)["construction"="highway"];
-                      way(area.dept)["construction"]["highway"];
-                      way(area.dept)["construction:highway"];
-                      
-                      // Routes proposées/en projet
-                      way(area.dept)["highway"="proposed"];
-                      way(area.dept)["proposed"="highway"];
-                      way(area.dept)["proposed:highway"];
-                      
-                      // Recherche aussi par bbox élargi (autour d'Orange, Avignon, etc.)
-                      way(43.6,4.5,44.4,5.9)["highway"="construction"];
-                      way(43.6,4.5,44.4,5.9)["construction"]["highway"];
-                      way(43.6,4.5,44.4,5.9)["highway"="proposed"];
-                    );
-                    out geom;
-                `;
-                
-                console.log('📡 Interrogation API Overpass (requête élargie)...');
+                console.log('📡 Chargement GeoJSON routes en construction...');
                 console.log('   Recherche : construction, proposed, et variantes');
                 console.log('   Zone : Vaucluse (84) + bbox élargi');
                 
-                const data = await window.InforouteApi.fetchOverpass('construction-roads', overpassQuery);
+                const data = await window.InforouteApi.fetchGeoJson('construction-roads');
+                const constructionWays = (data.features || [])
+                    .map(geoJsonLineFeatureToWay)
+                    .filter(Boolean);
                 
-                console.log('📦 Réponse Overpass reçue:');
-                console.log('   Elements:', data.elements ? data.elements.length : 0);
+                console.log('📦 GeoJSON routes en construction reçu:');
+                console.log('   Features:', constructionWays.length);
                 
-                if (data.elements && data.elements.length > 0) {
+                if (constructionWays.length > 0) {
                     console.log('   Exemples de tags:');
-                    data.elements.slice(0, 3).forEach((el, i) => {
+                    constructionWays.slice(0, 3).forEach((el, i) => {
                         console.log(`   Element ${i+1}:`, el.tags);
                     });
                 }
                 
-                if (!data.elements || data.elements.length === 0) {
+                if (constructionWays.length === 0) {
                     console.log('ℹ️ Aucune route en construction trouvée');
                     console.log('💡 Vérifiez sur https://www.openstreetmap.org autour d\'Orange');
                     console.log('💡 Recherchez les tags: highway=construction ou proposed');
@@ -2440,7 +2412,7 @@
                     return;
                 }
                 
-                console.log(`✓ ${data.elements.length} éléments chargés`);
+                console.log(`✓ ${constructionWays.length} éléments chargés`);
                 
                 let constructionCount = 0;
                 let proposedCount = 0;
@@ -2448,7 +2420,7 @@
                 
                 console.log('🔨 Début de traitement des éléments...');
                 
-                data.elements.forEach((way, index) => {
+                constructionWays.forEach((way, index) => {
                     if (!way.geometry || way.geometry.length === 0) {
                         skippedCount++;
                         if (index < 3) console.log(`   ⚠️ Element ${index+1} sans géométrie, ignoré`);

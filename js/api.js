@@ -35,61 +35,25 @@
         }
     }
 
-    async function fetchCachedJson(cachePath) {
-        if (!cachePath) return null;
-        if (responseCache.has(cachePath)) return responseCache.get(cachePath);
+    async function fetchGeoJson(cacheName) {
+        const cachePath = overpassConfig.cache?.[cacheName];
 
-        try {
-            const data = await fetchJson(cachePath, { cache: 'no-cache' }, { timeoutMs: 15000 });
-            responseCache.set(cachePath, data);
-            return data;
-        } catch (error) {
-            console.info(`Cache indisponible (${cachePath})`, error.message);
-            return null;
-        }
-    }
-
-    async function fetchOverpassLive(query) {
-        if (!overpassConfig.endpoint) {
-            throw new Error('Endpoint Overpass non configure');
+        if (!cachePath) {
+            throw new Error(`GeoJSON inconnu: ${cacheName}`);
         }
 
-        const timeout = createTimeout(overpassConfig.timeoutMs || 90000);
-
-        try {
-            // GitHub Pages cannot guarantee a custom User-Agent from browser fetch without CORS issues.
-            // The refresh script is the compliant Overpass client; this live path is only a fallback.
-            const response = await fetch(overpassConfig.endpoint, {
-                method: 'POST',
-                credentials: 'omit',
-                body: 'data=' + encodeURIComponent(query),
-                signal: timeout.signal
-            });
-
-            if (!response.ok) {
-                const body = await response.text().catch(() => '');
-                throw new Error(`Overpass HTTP ${response.status}${body ? `: ${body.slice(0, 160)}` : ''}`);
-            }
-
-            return await response.json();
-        } finally {
-            timeout.clear();
-        }
-    }
-
-    async function fetchOverpass(cacheName, query, options = {}) {
-        const cachePath = options.cachePath || overpassConfig.cache?.[cacheName];
-
-        if (overpassConfig.preferCache !== false) {
-            const cached = await fetchCachedJson(cachePath);
-            if (cached) return cached;
+        if (responseCache.has(cachePath)) {
+            return responseCache.get(cachePath);
         }
 
-        if (overpassConfig.allowLiveFallback === false) {
-            throw new Error(`Cache Overpass manquant: ${cachePath || cacheName}`);
+        const data = await fetchJson(cachePath, { cache: 'no-cache' }, { timeoutMs: 20000 });
+
+        if (data?.type !== 'FeatureCollection' || !Array.isArray(data.features)) {
+            throw new Error(`GeoJSON invalide: ${cachePath}`);
         }
 
-        return fetchOverpassLive(query);
+        responseCache.set(cachePath, data);
+        return data;
     }
 
     function normalizeCommuneName(value) {
@@ -100,40 +64,18 @@
             .replace(/[\u0300-\u036f]/g, '');
     }
 
-    function escapeOverpassString(value) {
-        return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    }
-
     async function fetchCommuneBoundary(communeName) {
         const targetName = normalizeCommuneName(communeName);
-        const cached = await fetchCachedJson(overpassConfig.cache?.communes);
+        const data = await fetchGeoJson('communes');
 
-        if (cached?.elements) {
-            const relation = cached.elements.find((element) => (
-                element.type === 'relation' &&
-                normalizeCommuneName(element.tags?.name) === targetName
-            ));
-
-            if (relation) {
-                return { ...cached, elements: [relation] };
-            }
-        }
-
-        const overpassQuery = `
-            [out:json][timeout:25];
-            area["ISO3166-2"="FR-84"]->.dept;
-            (
-              relation(area.dept)["boundary"="administrative"]["admin_level"="8"]["name"="${escapeOverpassString(communeName)}"];
-            );
-            out geom;
-        `;
-
-        return fetchOverpass('commune-boundary', overpassQuery, { cachePath: null });
+        return data.features.find((feature) => (
+            normalizeCommuneName(feature.properties?.name) === targetName
+        )) || null;
     }
 
     window.InforouteApi = Object.freeze({
         fetchJson,
-        fetchOverpass,
+        fetchGeoJson,
         fetchCommuneBoundary,
         getOverpassUserAgent: () => overpassConfig.userAgent
     });

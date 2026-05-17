@@ -12,11 +12,10 @@
             userAgent: `demo-inforoute-084/0.1.0 (${repository})`,
             timeoutMs: 90000,
             preferCache: true,
-            allowLiveFallback: true,
             cache: {
-                'departmental-roads': 'data/osm/departmental-roads.json',
-                'construction-roads': 'data/osm/construction-roads.json',
-                communes: 'data/osm/communes-vaucluse.json'
+                'departmental-roads': 'data/osm/departmental-roads.geojson',
+                'construction-roads': 'data/osm/construction-roads.geojson',
+                communes: 'data/osm/communes-vaucluse.geojson'
             }
         }
     });

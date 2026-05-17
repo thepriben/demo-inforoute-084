@@ -2,21 +2,21 @@
 
 Site statique de démonstration pour visualiser le réseau routier départemental du Vaucluse.
 
-## Données Overpass
+## Données GeoJSON
 
-Les appels Overpass principaux sont mis en cache dans `data/osm/*.json`. Le rafraîchissement se fait avec:
+Les donnees OSM utilisees par la carte sont servies en GeoJSON statique dans `data/osm/*.geojson`. Le rafraichissement fait les vraies requetes Overpass, puis convertit le resultat en GeoJSON:
 
 ```bash
 python3 scripts/refresh_overpass_cache.py
 ```
 
-Le script envoie un `User-Agent` explicite:
+Le script envoie un `User-Agent` explicite a Overpass:
 
 ```text
 demo-inforoute-084/0.1.0 (https://github.com/thepriben/demo-inforoute-084)
 ```
 
-Le site reste compatible GitHub Pages: le navigateur lit d'abord les caches statiques, puis tente un fallback live seulement si un cache manque. Le fallback navigateur n'ajoute pas de `User-Agent` applicatif, car cet en-tete doit etre gere par le script serveur pour eviter les preflights CORS.
+Le site reste compatible GitHub Pages: le navigateur ne requete plus Overpass au runtime, il lit uniquement les GeoJSON statiques.
 
 ## Publication GitHub Pages
 
