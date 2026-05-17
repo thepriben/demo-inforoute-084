@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import getpass
 import json
+import argparse
 import subprocess
 import urllib.error
 import urllib.request
@@ -50,9 +51,41 @@ def api_message(payload: dict[str, Any]) -> str:
     return str(payload.get("message") or payload)
 
 
+def prompt_macos_hidden(prompt: str) -> str:
+    script = (
+        'display dialog '
+        + json.dumps(prompt)
+        + ' default answer "" with hidden answer '
+        + 'buttons {"Annuler", "OK"} default button "OK" '
+        + 'with title "Publication GitHub Pages"'
+    )
+    result = subprocess.run(["osascript", "-e", script], text=True, capture_output=True, check=False)
+
+    if result.returncode != 0:
+        return ""
+
+    marker = "text returned:"
+    if marker not in result.stdout:
+        return ""
+
+    return result.stdout.split(marker, 1)[1].strip()
+
+
 def main() -> int:
-    owner = input(f"Compte GitHub [{DEFAULT_OWNER}]: ").strip() or DEFAULT_OWNER
-    token = getpass.getpass("Token GitHub (masque, pas le mot de passe): ").strip()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--owner", default=DEFAULT_OWNER, help="GitHub account or organization")
+    parser.add_argument("--gui", action="store_true", help="Ask for the token with a macOS hidden dialog")
+    args = parser.parse_args()
+
+    owner = args.owner
+    if args.gui:
+        token = prompt_macos_hidden(
+            "Collez un token GitHub, pas votre mot de passe. "
+            "Token classique: scopes repo + workflow."
+        )
+    else:
+        owner = input(f"Compte GitHub [{DEFAULT_OWNER}]: ").strip() or DEFAULT_OWNER
+        token = getpass.getpass("Token GitHub (masque, pas le mot de passe): ").strip()
 
     if not token:
         print("Aucun token fourni, arret.")
