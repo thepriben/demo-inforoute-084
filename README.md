@@ -1,3 +1,7 @@
+> Concepteur du projet : Jean-Louis Zimmermann @[JLZIMMERMANN](https://github.com/JLZIMMERMANN).
+
+---
+
 # Démo Inforoute 084
 
 Prototype de carte web pour explorer le réseau routier départemental du Vaucluse. L'objectif est de montrer, de façon concrète, ce qu'un outil léger pourrait apporter à un service routes du Conseil départemental de Vaucluse : lecture rapide du réseau, croisement avec l'accidentologie, repérage des points de comptage et première vérification de la qualité des données OpenStreetMap.
