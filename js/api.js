@@ -3,6 +3,7 @@
 
     const config = window.APP_CONFIG || {};
     const geojsonConfig = config.data?.geojson || {};
+    const jsonConfig = config.data?.json || {};
     const responseCache = new Map();
 
     function createTimeout(timeoutMs) {
@@ -56,6 +57,22 @@
         return data;
     }
 
+    async function fetchAppJson(cacheName) {
+        const cachePath = jsonConfig[cacheName];
+
+        if (!cachePath) {
+            throw new Error(`JSON inconnu: ${cacheName}`);
+        }
+
+        if (responseCache.has(cachePath)) {
+            return responseCache.get(cachePath);
+        }
+
+        const data = await fetchJson(cachePath, { cache: 'no-cache' }, { timeoutMs: 10000 });
+        responseCache.set(cachePath, data);
+        return data;
+    }
+
     function normalizeCommuneName(value) {
         return String(value || '')
             .trim()
@@ -75,6 +92,7 @@
 
     window.InforouteApi = Object.freeze({
         fetchJson,
+        fetchAppJson,
         fetchGeoJson,
         fetchCommuneBoundary
     });

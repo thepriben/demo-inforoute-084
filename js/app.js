@@ -1910,15 +1910,7 @@
         
         async function loadWeather() {
             try {
-                // Coordonnées d'Avignon (chef-lieu du Vaucluse)
-                const lat = 43.9493;
-                const lon = 4.8055;
-                
-                // API Open-Meteo (gratuite, pas de clé nécessaire)
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=Europe/Paris`;
-                
-                const response = await fetch(url);
-                const data = await response.json();
+                const data = await window.InforouteApi.fetchAppJson('weather');
                 
                 if (data.current) {
                     const temp = Math.round(data.current.temperature_2m);
@@ -2000,53 +1992,24 @@
         // ========== WAZE TRAFFIC ==========
         // (fonction définie globalement en haut du script)
 
-        // Charger les données de comptage depuis Datasud ou data.gouv.fr
+        // Charger les données de comptage depuis le GeoJSON local actualisé par script
         async function loadTrafficCountingData() {
             console.log('🚦 === DÉBUT CHARGEMENT STATIONS DE COMPTAGE ===');
             
-            // Sources de données (par ordre de priorité)
-            const dataSources = [
-                {
-                    name: 'Datasud',
-                    url: 'https://trouver.datasud.fr/dataset/73b8b0c8-5867-49e9-9adb-6c4e99e62d76/resource/bc50e6cd-e2fb-4e27-a50b-9e71bd44bf64/download/comptages-permanents-reseau-routier-departement-vaucluse.geojson'
-                },
-                {
-                    name: 'data.gouv.fr',
-                    url: 'https://static.data.gouv.fr/resources/comptages-permanents-sur-le-reseau-routier-du-departement-de-vaucluse-depuis-1996/20240724-144159/comptages-permanents-reseau-routier-departement-vaucluse.geojson'
-                }
-            ];
-
             let geojsonData = null;
             let sourceUsed = null;
 
-            // Essayer chaque source jusqu'à en trouver une qui fonctionne
-            for (const source of dataSources) {
-                try {
-                    console.log(`📡 Tentative de chargement depuis ${source.name}...`);
-                    console.log(`   URL: ${source.url}`);
-                    
-                    const response = await fetch(source.url);
-                    console.log(`   Status: ${response.status} ${response.statusText}`);
-                    
-                    if (response.ok) {
-                        geojsonData = await response.json();
-                        sourceUsed = source.name;
-                        console.log(`✓ Données chargées depuis ${source.name}`);
-                        console.log(`   Type: ${typeof geojsonData}`);
-                        console.log(`   Features: ${geojsonData.features ? geojsonData.features.length : 'N/A'}`);
-                        break;
-                    } else {
-                        console.warn(`   ❌ Échec HTTP ${response.status}`);
-                    }
-                } catch (error) {
-                    console.warn(`❌ Échec du chargement depuis ${source.name}:`, error.message);
-                }
+            try {
+                geojsonData = await window.InforouteApi.fetchGeoJson('traffic-counting');
+                sourceUsed = geojsonData._cache?.source_name || 'data.gouv.fr / CD84 (GeoJSON local)';
+                console.log(`✓ Données chargées depuis ${sourceUsed}`);
+                console.log(`   Features: ${geojsonData.features.length}`);
+            } catch (error) {
+                console.warn('❌ Échec du chargement du GeoJSON local de comptage:', error.message);
             }
 
             if (!geojsonData || !geojsonData.features) {
-                console.error('❌ AUCUNE SOURCE DE DONNÉES DISPONIBLE');
-                console.error('   Datasud: échec');
-                console.error('   data.gouv.fr: échec');
+                console.error('❌ AUCUN GEOJSON DE COMPTAGE DISPONIBLE');
                 console.warn('⚠️ Utilisation de données de démonstration (local)');
 
                 if (window.COMPTAGES_GEOJSON && window.COMPTAGES_GEOJSON.features) {
@@ -2069,7 +2032,7 @@
                 if (geojsonData && geojsonData.features) {
                     L.popup()
                         .setLatLng([44.0, 5.0])
-                        .setContent('<div style="padding: 15px; text-align: center;"><strong>⚠️ Stations de comptage</strong><br><small>APIs externes indisponibles<br><br><strong>5 stations de démonstration affichées</strong><br><br>Pour les données réelles, vérifiez :<br>• Connexion réseau<br>• URLs Datasud/data.gouv.fr</small></div>')
+                        .setContent('<div style="padding: 15px; text-align: center;"><strong>⚠️ Stations de comptage</strong><br><small>GeoJSON local indisponible<br><br><strong>5 stations de démonstration affichées</strong><br><br>Lancez scripts/update_external_data.py pour actualiser les données réelles.</small></div>')
                         .openOn(window.map);
                     
                     setTimeout(() => window.map.closePopup(), 6000);
@@ -2088,8 +2051,10 @@
             const latestDataByStation = {};
             geojsonData.features.forEach(feature => {
                 const props = feature.properties;
-                const stationId = props.section_compteur;
+                const stationId = props.section_compteur ?? props.section_co ?? props.identifian ?? props.id_station ?? props.id;
                 const year = parseInt(props.annee);
+
+                if (!stationId) return;
                 
                 if (!latestDataByStation[stationId] || year > latestDataByStation[stationId].year) {
                     latestDataByStation[stationId] = {
@@ -2115,8 +2080,8 @@
                 const tauxPL = Number(props.taux_pl ?? props.tauxpl ?? props.taux_pl_pc ?? 0);
                 const debitPL = Number(props.debit_pl ?? props.debitpl ?? props.pl_jour ?? 0);
                 
-                const routeName = props.nom_route_cd ?? props.nom_route ?? props.route ?? props.ref ?? 'N/A';
-                const sectionName = props.section_compteur ?? props.section ?? props.id_station ?? props.id ?? 'N/A';
+                const routeName = props.nom_route_cd ?? props.nom_route_ ?? props.nom_route ?? props.route ?? props.ref ?? 'N/A';
+                const sectionName = props.section_compteur ?? props.section_co ?? props.section ?? props.id_station ?? props.id ?? 'N/A';
                 const yearValue = props.annee ?? props.year ?? props.an ?? 'N/A';
                 
                 const formatNumber = (value, suffix = '') => Number.isFinite(value) ? `${value.toLocaleString()}${suffix}` : 'N/A';
@@ -2649,20 +2614,10 @@
             try {
                 console.log('🚗 Chargement des données Bison Futé / Info Routière...');
                 
-                // API Info Routière - Événements routiers
-                // Format : GeoJSON des événements (chantiers, bouchons, accidents)
-                const apiUrl = 'https://diffusion-numerique.info-routiere.gouv.fr/api/v2/events.geojson';
-                
-                const response = await fetch(apiUrl);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                
-                const data = await response.json();
+                const data = await window.InforouteApi.fetchGeoJson('road-events');
                 
                 if (!data.features || data.features.length === 0) {
-                    console.log('ℹ️ Aucun événement Bison Futé actuellement dans la zone');
+                    console.log('ℹ️ Aucun événement Info Routière dans le GeoJSON local');
                     return;
                 }
                 
