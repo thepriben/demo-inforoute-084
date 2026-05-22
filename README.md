@@ -1,4 +1,4 @@
-> Concepteur du projet : Jean-Louis Zimmermann [@JLZIMMERMANN](https://github.com/JLZIMMERMANN)
+> Concepteur du projet : Jean-Louis Zimmermann, chargé de mission outils digitaux routiers au sein du CD84 en 2026  [@JLZIMMERMANN](https://github.com/JLZIMMERMANN)
 
 ---
 
