@@ -318,7 +318,7 @@
                         <div class="refresh-formula-row" data-schedule-key="osm">
                             <div>
                                 <div class="refresh-formula-label">OSM (routes, communes, constructions)</div>
-                                <div style="font-size:0.7rem;color:#7f8c8d;">Source : Overpass → workflow GitHub Actions</div>
+                                <div style="font-size:0.7rem;color:#7f8c8d;">Source&nbsp;: Overpass → workflow GitHub Actions</div>
                             </div>
                             <div class="refresh-formula-meta" id="refreshMetaOsm">
                                 Hebdo · lun. 03:17 UTC<br>—
@@ -366,25 +366,21 @@
             </div>
 
             <div style="position: relative;">
-                <!-- Bouton qualité des données -->
-                <button class="quality-toggle" onclick="toggleQualityPanel()" style="top: 20px; right: 20px;">
-                    Qualité OSM
-                </button>
-
-                <!-- Bouton Waze Traffic -->
-                <button class="quality-toggle" onclick="toggleWazeTraffic()" style="top: 20px; right: 210px; background: white; border-color: #00D4FF; color: #00D4FF;" id="wazeBtn" title="Mettre en évidence les stations de comptage CD84">
-                    Comptages CD84
-                </button>
-
-                <!-- Bouton Convois Exceptionnels -->
-                <button class="quality-toggle" onclick="toggleConvoisExceptionnels()" style="top: 80px; right: 20px; background: white; border-color: #9B59B6; color: #9B59B6;" id="convoiBtn" title="Afficher les itinéraires pour convois exceptionnels">
-                    Convois Except.
-                </button>
-
-                <!-- Bouton Limitations & Restrictions -->
-                <button class="quality-toggle" onclick="toggleLimitationsMode()" style="top: 80px; right: 210px; background: white; border-color: #F39C12; color: #F39C12;" id="limitsBtn" title="Afficher les limitations de vitesse (dégradé chaud/froid) et les restrictions ponts/PL (hauteur, poids, longueur, largeur)">
-                    Limitations
-                </button>
+                <!-- Barre d'outils unifiée : 4 modes spéciaux groupés en haut à droite, sans chevauchement possible -->
+                <div class="map-toolbar" role="toolbar" aria-label="Modes d'affichage spéciaux">
+                    <button type="button" class="map-tool" data-accent="#3498DB" onclick="toggleQualityPanel()" id="qualityBtn" title="Ouvrir le panneau Qualité des données OSM (Wikidata, relations)">
+                        <span class="map-tool-icon">🔍</span><span class="map-tool-label">Qualité OSM</span>
+                    </button>
+                    <button type="button" class="map-tool" data-accent="#00A8E8" onclick="toggleWazeTraffic()" id="wazeBtn" title="Mettre en évidence les stations de comptage CD84">
+                        <span class="map-tool-icon">📊</span><span class="map-tool-label">Comptages CD84</span>
+                    </button>
+                    <button type="button" class="map-tool" data-accent="#9B59B6" onclick="toggleConvoisExceptionnels()" id="convoiBtn" title="Afficher les itinéraires adaptés aux convois exceptionnels">
+                        <span class="map-tool-icon">🚛</span><span class="map-tool-label">Convois&nbsp;Except.</span>
+                    </button>
+                    <button type="button" class="map-tool" data-accent="#F39C12" onclick="toggleLimitationsMode()" id="limitsBtn" title="Afficher les limitations de vitesse (dégradé chaud/froid) et les restrictions ponts/PL (hauteur, poids, longueur, largeur)">
+                        <span class="map-tool-icon">🚦</span><span class="map-tool-label">Limitations</span>
+                    </button>
+                </div>
 
                 <!-- Panneau de qualité des données -->
                 <div class="quality-panel" id="qualityPanel">

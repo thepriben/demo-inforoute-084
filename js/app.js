@@ -183,9 +183,9 @@
 
             const tooltipLines = [
                 config.label || '',
-                config.source ? `Source : ${config.source}` : '',
+                config.source ? `Source\u00a0: ${config.source}` : '',
                 generatedAt ? `Intégré le ${formatParisDateTime(generatedAt)}` : '',
-                errorMsg ? `Erreur : ${errorMsg}` : ''
+                errorMsg ? `Erreur\u00a0: ${errorMsg}` : ''
             ].filter(Boolean);
             element.title = tooltipLines.join('\n');
 
@@ -573,15 +573,32 @@
             
             // Mettre le bouton en gras quand actif
             if (panel.classList.contains('active')) {
-                if (btn) btn.style.fontWeight = '700';
+                setToolActive('qualityBtn', true);
                 if (!panel.dataset.loaded) {
                     calculateQualityMetrics();
                     panel.dataset.loaded = 'true';
                 }
             } else {
-                if (btn) btn.style.fontWeight = '600';
+                setToolActive('qualityBtn', false);
             }
         }
+
+        // === Map toolbar helpers ===
+        // Each .map-tool carries data-accent="#xxxxxx" ; we mirror it into the
+        // --map-tool-accent CSS var so the hover/active states pick the right hue.
+        function setupMapToolbar() {
+            document.querySelectorAll('.map-tool[data-accent]').forEach(btn => {
+                btn.style.setProperty('--map-tool-accent', btn.dataset.accent);
+            });
+        }
+
+        function setToolActive(btnId, active) {
+            const btn = document.getElementById(btnId);
+            if (!btn) return;
+            btn.classList.toggle('is-active', !!active);
+        }
+
+        document.addEventListener('DOMContentLoaded', setupMapToolbar);
 
         let wazeLayer = null;
         let wazeEnabled = false;
@@ -666,7 +683,7 @@
             });
 
             statusElement.innerHTML = [
-                `Données externes : cache local rafraîchi toutes les ${refreshHours} h`,
+                `Données externes\u00a0: cache local rafraîchi toutes les ${refreshHours} h`,
                 ...lines
             ].join('<br>');
         }
@@ -733,17 +750,10 @@
         
         window.toggleConvoisExceptionnels = function() {
             convoiMode = !convoiMode;
-            const btn = document.getElementById('convoiBtn');
-            
+            setToolActive('convoiBtn', convoiMode);
+
             if (convoiMode) {
                 console.log('🚛 Mode Convois Exceptionnels activé');
-                
-                // Changer le style du bouton
-                btn.style.background = 'linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%)';
-                btn.style.color = 'white';
-                btn.style.borderColor = '#9B59B6';
-                btn.style.fontWeight = '700';
-                
                 // Filtrer et mettre en évidence les routes adaptées
                 filterRoutesForConvois();
 
@@ -761,16 +771,8 @@
 
             } else {
                 console.log('✗ Mode Convois Exceptionnels désactivé');
-                
-                // Restaurer le style du bouton
-                btn.style.background = 'white';
-                btn.style.color = '#9B59B6';
-                btn.style.borderColor = '#9B59B6';
-                btn.style.fontWeight = '600';
-                
                 // Restaurer toutes les routes
                 restoreAllRoutes();
-                
                 window.map.closePopup();
             }
         };
@@ -1105,17 +1107,11 @@
         async function toggleWazeTraffic() {
             wazeEnabled = !wazeEnabled;
             
-            const btn = document.getElementById('wazeBtn');
-            
+            setToolActive('wazeBtn', wazeEnabled);
+
             if (wazeEnabled) {
                 // Mettre en évidence les stations de comptage CD84 (données de trafic réelles)
                 console.log('🚗 Mise en évidence des stations de comptage CD84');
-                
-                // Changer le style du bouton
-                btn.style.background = 'linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)';
-                btn.style.color = 'white';
-                btn.style.borderColor = '#FF6B35';
-                btn.style.fontWeight = '700'; // Gras quand actif
                 
                 // Compter les stations
                 let stationCount = 0;
@@ -1167,16 +1163,7 @@
                         layer.setStyle({ fillOpacity: 0.8, opacity: 1 });
                     }
                 });
-                
-                // Restaurer le style du bouton
-                btn.style.background = 'white';
-                btn.style.color = '#00D4FF';
-                btn.style.borderColor = '#00D4FF';
-                btn.style.fontWeight = '600'; // Poids normal
-                
-                // Fermer le popup
                 window.map.closePopup();
-                
                 console.log('✗ Mode Trafic désactivé');
             }
         }
@@ -1473,8 +1460,8 @@
                                         </div>
                                         <div class="popup-tab-panel" data-tab="details">
                                         <h3>${roadName}</h3>
-                                        <div class="detail"><strong>Référence:</strong> ${ref}</div>
-                                        <div class="detail"><strong>Type:</strong> ${hierarchyLabel}</div>
+                                        <div class="detail"><strong>Référence&nbsp;:</strong> ${ref}</div>
+                                        <div class="detail"><strong>Type&nbsp;:</strong> ${hierarchyLabel}</div>
                                         
                                         ${way.tags.description || way.relationTags?.description ? `
                                             <div class="detail" style="margin-top: 8px; padding: 8px; background: #f8f9fa; border-radius: 4px; font-style: italic; font-size: 0.9rem;">
@@ -1482,14 +1469,14 @@
                                             </div>
                                         ` : ''}
                                         
-                                        ${way.tags.surface ? `<div class="detail"><strong>Surface:</strong> ${way.tags.surface}</div>` : ''}
-                                        ${way.tags.maxspeed ? `<div class="detail"><strong>Vitesse max:</strong> ${way.tags.maxspeed} km/h</div>` : ''}
-                                        ${way.tags.lanes ? `<div class="detail"><strong>Voies:</strong> ${way.tags.lanes}</div>` : ''}
-                                        ${way.tags.oneway === 'yes' ? `<div class="detail"><strong>Sens unique:</strong> ➡️ Oui</div>` : ''}
+                                        ${way.tags.surface ? `<div class="detail"><strong>Surface&nbsp;:</strong> ${way.tags.surface}</div>` : ''}
+                                        ${way.tags.maxspeed ? `<div class="detail"><strong>Vitesse max&nbsp;:</strong> ${way.tags.maxspeed} km/h</div>` : ''}
+                                        ${way.tags.lanes ? `<div class="detail"><strong>Voies&nbsp;:</strong> ${way.tags.lanes}</div>` : ''}
+                                        ${way.tags.oneway === 'yes' ? `<div class="detail"><strong>Sens unique&nbsp;:</strong> ➡️ Oui</div>` : ''}
                                         
                                         ${way.relationTags && way.relationTags.wikidata ? `
                                             <div class="detail" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd;">
-                                                <strong>📚 Wikidata:</strong> 
+                                                <strong>📚 Wikidata&nbsp;:</strong> 
                                                 <a href="https://www.wikidata.org/wiki/${way.relationTags.wikidata}" target="_blank" style="color: #3498DB; font-weight: 600; text-decoration: none;">
                                                     ${way.relationTags.wikidata} →
                                                 </a>
@@ -1499,7 +1486,7 @@
                                             </div>
                                         ` : way.tags.wikidata ? `
                                             <div class="detail" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd;">
-                                                <strong>📚 Wikidata:</strong> 
+                                                <strong>📚 Wikidata&nbsp;:</strong> 
                                                 <a href="https://www.wikidata.org/wiki/${way.tags.wikidata}" target="_blank" style="color: #3498DB; font-weight: 600; text-decoration: none;">
                                                     ${way.tags.wikidata} →
                                                 </a>
@@ -1511,7 +1498,7 @@
                                         
                                         ${way.tags.wikipedia || way.relationTags?.wikipedia ? `
                                             <div class="detail">
-                                                <strong>📖 Wikipedia:</strong> 
+                                                <strong>📖 Wikipedia&nbsp;:</strong> 
                                                 <a href="https://fr.wikipedia.org/wiki/${encodeURIComponent((way.relationTags?.wikipedia || way.tags.wikipedia).replace('fr:', ''))}" target="_blank" style="color: #3498DB; font-weight: 600; text-decoration: none;">
                                                     Lire l'article →
                                                 </a>
@@ -1520,7 +1507,7 @@
                                         
                                         ${way.tags.website || way.relationTags?.website ? `
                                             <div class="detail">
-                                                <strong>🌐 Site web:</strong> 
+                                                <strong>🌐 Site web&nbsp;:</strong> 
                                                 <a href="${way.relationTags?.website || way.tags.website}" target="_blank" style="color: #3498DB; font-weight: 600; text-decoration: none;">
                                                     Visiter →
                                                 </a>
@@ -1529,17 +1516,17 @@
                                         
                                         ${way.tags.destination || way.relationTags?.destination ? `
                                             <div class="detail" style="margin-top: 8px;">
-                                                <strong>🎯 Destination:</strong> ${way.relationTags?.destination || way.tags.destination}
+                                                <strong>🎯 Destination&nbsp;:</strong> ${way.relationTags?.destination || way.tags.destination}
                                             </div>
                                         ` : ''}
                                         
                                         ${way.hasRelation ? `
                                             <div class="detail" style="margin-top: 8px;">
-                                                <strong>Relation OSM:</strong> <span style="color: #27AE60; font-weight: 600;">✓ Complète</span>
+                                                <strong>Relation OSM&nbsp;:</strong> <span style="color: #27AE60; font-weight: 600;">✓ Complète</span>
                                             </div>
                                         ` : `
                                             <div class="detail" style="margin-top: 8px;">
-                                                <strong>Relation OSM:</strong> <span style="color: #E74C3C;">✗ Manquante</span>
+                                                <strong>Relation OSM&nbsp;:</strong> <span style="color: #E74C3C;">✗ Manquante</span>
                                                 <span style="font-size: 0.8rem; color: #999; display: block; margin-top: 3px;">
                                                     💡 Contribuez en créant une relation pour cette route
                                                 </span>
@@ -2841,17 +2828,17 @@
                 const popupContent = `
                     <div class="route-popup">
                         <h3>📊 Station de comptage</h3>
-                        <div class="detail"><strong>Route:</strong> ${routeName || 'N/A'}</div>
-                        <div class="detail"><strong>Section:</strong> ${sectionName || 'N/A'}</div>
-                        <div class="detail"><strong>Année:</strong> ${yearValue || 'N/A'}</div>
+                        <div class="detail"><strong>Route&nbsp;:</strong> ${routeName || 'N/A'}</div>
+                        <div class="detail"><strong>Section&nbsp;:</strong> ${sectionName || 'N/A'}</div>
+                        <div class="detail"><strong>Année&nbsp;:</strong> ${yearValue || 'N/A'}</div>
                         <div class="detail" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #ddd;">
-                            <strong>MJA (tous véhicules):</strong> ${formatNumber(mja, ' véh/jour')}
+                            <strong>MJA (tous véhicules)&nbsp;:</strong> ${formatNumber(mja, ' véh/jour')}
                         </div>
-                        <div class="detail"><strong>Taux PL:</strong> ${Number.isFinite(tauxPL) ? tauxPL.toFixed(1) + '%' : 'N/A'}</div>
-                        <div class="detail"><strong>Débit PL:</strong> ${formatNumber(debitPL, ' PL/jour')}</div>
-                        ${props.classe ? `<div class="detail"><strong>Classification:</strong> ${props.classe}</div>` : ''}
+                        <div class="detail"><strong>Taux PL&nbsp;:</strong> ${Number.isFinite(tauxPL) ? tauxPL.toFixed(1) + '%' : 'N/A'}</div>
+                        <div class="detail"><strong>Débit PL&nbsp;:</strong> ${formatNumber(debitPL, ' PL/jour')}</div>
+                        ${props.classe ? `<div class="detail"><strong>Classification&nbsp;:</strong> ${props.classe}</div>` : ''}
                         <div class="detail" style="margin-top: 8px; font-size: 0.75rem; color: #999;">
-                            <strong>Source:</strong> ${sourceUsed || 'Inconnue'}
+                            <strong>Source&nbsp;:</strong> ${sourceUsed || 'Inconnue'}
                         </div>
                     </div>
                 `;
@@ -2971,11 +2958,11 @@
                     const popupContent = `
                         <div class="route-popup">
                             <h3>${label}</h3>
-                            <div class="detail"><strong>Victimes:</strong> ${victimesInfo.join(', ')}</div>
-                            <div class="detail"><strong>Date:</strong> ${props.date}</div>
-                            <div class="detail"><strong>Commune:</strong> ${props.commune}</div>
-                            ${props.adresse ? `<div class="detail"><strong>Adresse:</strong> ${props.adresse}</div>` : ''}
-                            <div class="detail"><strong>Milieu:</strong> ${props.milieu}</div>
+                            <div class="detail"><strong>Victimes&nbsp;:</strong> ${victimesInfo.join(', ')}</div>
+                            <div class="detail"><strong>Date&nbsp;:</strong> ${props.date}</div>
+                            <div class="detail"><strong>Commune&nbsp;:</strong> ${props.commune}</div>
+                            ${props.adresse ? `<div class="detail"><strong>Adresse&nbsp;:</strong> ${props.adresse}</div>` : ''}
+                            <div class="detail"><strong>Milieu&nbsp;:</strong> ${props.milieu}</div>
                             ${props.resume ? `<div class="detail" style="margin-top: 8px; font-size: 0.85rem; font-style: italic;">${props.resume}</div>` : ''}
                         </div>
                     `;
@@ -3148,8 +3135,8 @@
                     const popupContent = `
                         <div class="route-popup">
                             <h3>${statusLabel}</h3>
-                            <div class="detail"><strong>Nom/Réf:</strong> ${name}</div>
-                            <div class="detail"><strong>Type futur:</strong> ${futureType.replace('_', ' ')}</div>
+                            <div class="detail"><strong>Nom/Réf&nbsp;:</strong> ${name}</div>
+                            <div class="detail"><strong>Type futur&nbsp;:</strong> ${futureType.replace('_', ' ')}</div>
                             
                             ${tags.description || tags['construction:description'] ? `
                                 <div class="detail" style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #FF6B35; border-radius: 4px; font-style: italic;">
@@ -3158,14 +3145,14 @@
                             ` : ''}
                             
                             <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #ddd;">
-                                ${startDate !== 'Non renseignée' ? `<div class="detail"><strong>🗓️ Début:</strong> ${startDate}</div>` : ''}
-                                ${endDate !== 'Non renseignée' ? `<div class="detail"><strong>🏁 Fin prévue:</strong> ${endDate}</div>` : ''}
-                                ${expectedOpening !== 'Non renseignée' ? `<div class="detail"><strong>🎉 Ouverture:</strong> ${expectedOpening}</div>` : ''}
+                                ${startDate !== 'Non renseignée' ? `<div class="detail"><strong>🗓️ Début&nbsp;:</strong> ${startDate}</div>` : ''}
+                                ${endDate !== 'Non renseignée' ? `<div class="detail"><strong>🏁 Fin prévue&nbsp;:</strong> ${endDate}</div>` : ''}
+                                ${expectedOpening !== 'Non renseignée' ? `<div class="detail"><strong>🎉 Ouverture&nbsp;:</strong> ${expectedOpening}</div>` : ''}
                             </div>
                             
                             ${tags.operator || tags['construction:operator'] ? `
                                 <div class="detail" style="margin-top: 8px;">
-                                    <strong>🏗️ Maître d'ouvrage:</strong> ${tags.operator || tags['construction:operator']}
+                                    <strong>🏗️ Maître d'ouvrage&nbsp;:</strong> ${tags.operator || tags['construction:operator']}
                                 </div>
                             ` : ''}
                             
@@ -3177,7 +3164,7 @@
                             
                             ${tags.website ? `
                                 <div class="detail" style="margin-top: 10px;">
-                                    <strong>🌐 Site web:</strong> 
+                                    <strong>🌐 Site web&nbsp;:</strong> 
                                     <a href="${tags.website}" target="_blank" style="color: #3498DB; font-weight: 600; text-decoration: none;">
                                         Visiter le site du projet →
                                     </a>
@@ -3186,7 +3173,7 @@
                             
                             ${tags.wikidata ? `
                                 <div class="detail" style="margin-top: 8px;">
-                                    <strong>📚 Wikidata:</strong> 
+                                    <strong>📚 Wikidata&nbsp;:</strong> 
                                     <a href="https://www.wikidata.org/wiki/${tags.wikidata}" target="_blank" style="color: #3498DB; font-weight: 600;">
                                         ${tags.wikidata} →
                                     </a>
@@ -3368,13 +3355,13 @@
                     const popupContent = `
                         <div class="route-popup">
                             <h3>${icon} Bison Futé</h3>
-                            <div class="detail"><strong>Type:</strong> ${eventType}</div>
-                            ${props.description ? `<div class="detail"><strong>Description:</strong> ${props.description}</div>` : ''}
-                            ${props.road_name ? `<div class="detail"><strong>Route:</strong> ${props.road_name}</div>` : ''}
-                            <div class="detail"><strong>Début:</strong> ${startDate}</div>
-                            ${props.end_time ? `<div class="detail"><strong>Fin prévue:</strong> ${endDate}</div>` : ''}
+                            <div class="detail"><strong>Type&nbsp;:</strong> ${eventType}</div>
+                            ${props.description ? `<div class="detail"><strong>Description&nbsp;:</strong> ${props.description}</div>` : ''}
+                            ${props.road_name ? `<div class="detail"><strong>Route&nbsp;:</strong> ${props.road_name}</div>` : ''}
+                            <div class="detail"><strong>Début&nbsp;:</strong> ${startDate}</div>
+                            ${props.end_time ? `<div class="detail"><strong>Fin prévue&nbsp;:</strong> ${endDate}</div>` : ''}
                             <div class="detail" style="margin-top: 8px; font-size: 0.75rem; color: #999;">
-                                <strong>Source:</strong> Bison Futé / Info Routière
+                                <strong>Source&nbsp;:</strong> Bison Futé / Info Routière
                             </div>
                         </div>
                     `;
@@ -3660,7 +3647,7 @@
             container.innerHTML = `
                 <div style="font-size:0.78rem; color:#5b6770; font-weight:600; margin-bottom:4px;">Limites de vitesse (km/h)</div>
                 <div class="limitations-legend-scale">${scaleHtml}</div>
-                <div style="font-size:0.7rem; color:#7f8c8d; margin-top:6px;">Inconnue : <span style="display:inline-block;width:14px;height:8px;border-radius:2px;background:${SPEED_UNKNOWN_COLOR};vertical-align:middle;"></span></div>
+                <div style="font-size:0.7rem; color:#7f8c8d; margin-top:6px;">Inconnue&nbsp;: <span style="display:inline-block;width:14px;height:8px;border-radius:2px;background:${SPEED_UNKNOWN_COLOR};vertical-align:middle;"></span></div>
                 <div style="font-size:0.7rem; color:#7f8c8d; margin-top:8px; padding-top:6px; border-top:1px solid #ecf0f1;">
                     Pictogrammes <strong style="color:#2C3E50;">vitesse</strong> au zoom ≥ 13.<br>
                     Restrictions <strong style="color:#C0392B;">🏔️ hauteur</strong> · <strong style="color:#8E44AD;">🚛 poids</strong> sur ponts et tronçons remarquables au zoom ≥ 11.
@@ -3669,19 +3656,7 @@
         }
 
         function setLimitationsButtonActive(active) {
-            const btn = document.getElementById('limitsBtn');
-            if (!btn) return;
-            if (active) {
-                btn.style.background = 'linear-gradient(135deg, #F39C12 0%, #E67E22 100%)';
-                btn.style.color = 'white';
-                btn.style.borderColor = '#F39C12';
-                btn.style.fontWeight = '700';
-            } else {
-                btn.style.background = 'white';
-                btn.style.color = '#F39C12';
-                btn.style.borderColor = '#F39C12';
-                btn.style.fontWeight = '600';
-            }
+            setToolActive('limitsBtn', active);
         }
 
         window.toggleLimitationsMode = function() {
