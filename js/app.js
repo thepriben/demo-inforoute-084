@@ -600,6 +600,88 @@
 
         document.addEventListener('DOMContentLoaded', setupMapToolbar);
 
+        // === Sidebar resizer (drag horizontal) ===
+        // Permet à l'utilisateur d'élargir/réduire la sidebar en glissant le
+        // séparateur au centre. La taille est persistée dans localStorage et
+        // Leaflet est notifié pour redessiner la carte une fois le drag fini.
+        function setupSidebarResizer() {
+            const resizer = document.getElementById('sidebarResizer');
+            const mainContent = document.querySelector('.main-content');
+            if (!resizer || !mainContent) return;
+
+            const MIN_WIDTH = 220;
+            const MAX_WIDTH = 560;
+
+            // Restaurer la largeur sauvegardée
+            try {
+                const saved = Number.parseInt(localStorage.getItem('sidebarWidth') || '', 10);
+                if (Number.isFinite(saved) && saved >= MIN_WIDTH && saved <= MAX_WIDTH) {
+                    mainContent.style.setProperty('--sidebar-width', `${saved}px`);
+                }
+            } catch (_) { /* localStorage indisponible (mode privé) */ }
+
+            let dragging = false;
+            let pendingWidth = null;
+
+            const onPointerMove = (event) => {
+                if (!dragging) return;
+                const rect = mainContent.getBoundingClientRect();
+                const next = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, event.clientX - rect.left));
+                pendingWidth = next;
+                mainContent.style.setProperty('--sidebar-width', `${next}px`);
+            };
+
+            const onPointerUp = () => {
+                if (!dragging) return;
+                dragging = false;
+                document.body.classList.remove('is-resizing');
+                resizer.classList.remove('is-dragging');
+                window.removeEventListener('pointermove', onPointerMove);
+                window.removeEventListener('pointerup', onPointerUp);
+                if (pendingWidth != null) {
+                    try { localStorage.setItem('sidebarWidth', String(Math.round(pendingWidth))); } catch (_) {}
+                }
+                if (window.map && typeof window.map.invalidateSize === 'function') {
+                    window.map.invalidateSize();
+                }
+            };
+
+            resizer.addEventListener('pointerdown', (event) => {
+                event.preventDefault();
+                dragging = true;
+                pendingWidth = null;
+                document.body.classList.add('is-resizing');
+                resizer.classList.add('is-dragging');
+                window.addEventListener('pointermove', onPointerMove);
+                window.addEventListener('pointerup', onPointerUp);
+            });
+
+            // Double-clic : remettre la largeur par défaut
+            resizer.addEventListener('dblclick', () => {
+                mainContent.style.removeProperty('--sidebar-width');
+                try { localStorage.removeItem('sidebarWidth'); } catch (_) {}
+                if (window.map && typeof window.map.invalidateSize === 'function') {
+                    window.map.invalidateSize();
+                }
+            });
+
+            // Flèches clavier quand le séparateur a le focus
+            resizer.addEventListener('keydown', (event) => {
+                if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+                event.preventDefault();
+                const current = Number.parseInt(getComputedStyle(mainContent).getPropertyValue('--sidebar-width'), 10) || 320;
+                const delta = event.key === 'ArrowLeft' ? -20 : 20;
+                const next = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, current + delta));
+                mainContent.style.setProperty('--sidebar-width', `${next}px`);
+                try { localStorage.setItem('sidebarWidth', String(next)); } catch (_) {}
+                if (window.map && typeof window.map.invalidateSize === 'function') {
+                    window.map.invalidateSize();
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', setupSidebarResizer);
+
         let wazeLayer = null;
         let wazeEnabled = false;
         let trafficMarkers = [];
