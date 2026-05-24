@@ -922,46 +922,21 @@
             margin-bottom: 8px;
         }
 
-        .credits-list {
-            list-style: disc;
-            padding-left: 18px;
-            margin: 0;
+        .credits-author {
+            margin: 6px 0 10px 0;
+            color: #2C3E50;
         }
 
-        .credits-list li + li {
-            margin-top: 4px;
-        }
-
-        .credits-list .credits-key {
-            color: #5b6770;
-            font-weight: 600;
-            margin-right: 4px;
-        }
-
-        .credits-list .credits-sep {
-            color: #bdc3c7;
-            margin: 0 4px;
-        }
-
-        .credits-list a {
+        .credits-author a {
             color: #3498DB;
             font-weight: 600;
             text-decoration: none;
-            word-break: break-all;
             transition: color 0.18s;
         }
 
-        .credits-list a:hover {
+        .credits-author a:hover {
             color: #1f6391;
             text-decoration: underline;
-        }
-
-        /* Sous-ligne du bloc auteur (Département) */
-        .credits-list .credits-sub {
-            display: inline-block;
-            margin-top: 2px;
-            color: #5b6770;
-            font-size: 0.74rem;
         }
 
         /* Lien inline du dépôt GitHub : icône + badge étoiles + nom */
