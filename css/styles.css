@@ -654,4 +654,41 @@
                 transform: scale(1);
             }
         }
+
+        /* Icône œil de visibilité des couches */
+        .toggle-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(39, 174, 96, 0.12);
+            color: var(--success);
+            transition: color 0.25s ease, background 0.25s ease, transform 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .toggle-icon svg {
+            width: 18px;
+            height: 18px;
+            display: block;
+        }
+
+        .toggle-icon.is-hidden {
+            color: #95A5A6;
+            background: rgba(149, 165, 166, 0.15);
+        }
+
+        .legend-title:hover .toggle-icon {
+            transform: scale(1.12);
+        }
+
+        .legend-title:hover .toggle-icon:not(.is-hidden) {
+            background: rgba(39, 174, 96, 0.22);
+        }
+
+        .legend-title:hover .toggle-icon.is-hidden {
+            background: rgba(149, 165, 166, 0.28);
+        }
     
