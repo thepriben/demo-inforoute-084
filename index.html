@@ -30,9 +30,12 @@
         <div class="main-content">
             <div class="sidebar">
                 <div class="legend-section">
-                    <div class="legend-title">Territoire</div>
+                    <div class="legend-title" onclick="toggleBoundary()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+                        <span>Territoire</span>
+                        <span id="boundaryToggleIcon" style="font-size: 1.2rem; transition: transform 0.3s;">👁️</span>
+                    </div>
                     
-                    <div class="legend-item" style="pointer-events: none;">
+                    <div class="legend-item" data-boundary="vaucluse" style="pointer-events: none;">
                         <div class="legend-color" style="background: transparent; border: 2px dashed #2C3E50; height: 0px; width: 40px;"></div>
                         <div class="legend-label">Limite du Vaucluse (84)</div>
                         <div class="legend-count"></div>
@@ -92,7 +95,10 @@
                 </div>
 
                 <div class="legend-section">
-                    <div class="legend-title">Stations de Comptage</div>
+                    <div class="legend-title" onclick="toggleTraffic()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+                        <span>Stations de Comptage</span>
+                        <span id="trafficToggleIcon" style="font-size: 1.2rem; transition: transform 0.3s;">👁️</span>
+                    </div>
                     
                     <div class="legend-item" data-traffic="high">
                         <div class="legend-color" style="background: #E74C3C; width: 12px; height: 12px; border-radius: 50%;"></div>
@@ -110,6 +116,48 @@
                         <div class="legend-color" style="background: #3498DB; width: 8px; height: 8px; border-radius: 50%;"></div>
                         <div class="legend-label">Trafic faible (&lt;5k véh/j)</div>
                         <div class="legend-count" id="count-low">-</div>
+                    </div>
+                </div>
+
+                <div class="legend-section">
+                    <div class="legend-title" onclick="toggleBisonFute()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+                        <span>Événements Routiers</span>
+                        <span id="bisonFuteToggleIcon" style="font-size: 1.2rem; transition: transform 0.3s;">👁️</span>
+                    </div>
+
+                    <div class="legend-item" data-bison-fute="travaux" style="pointer-events: none;">
+                        <div class="legend-color" style="background: transparent; width: 18px; height: 18px; text-align: center; line-height: 18px;">🚧</div>
+                        <div class="legend-label">Travaux</div>
+                        <div class="legend-count"></div>
+                    </div>
+
+                    <div class="legend-item" data-bison-fute="bouchons" style="pointer-events: none;">
+                        <div class="legend-color" style="background: transparent; width: 18px; height: 18px; text-align: center; line-height: 18px;">🚗</div>
+                        <div class="legend-label">Bouchons</div>
+                        <div class="legend-count"></div>
+                    </div>
+
+                    <div class="legend-item" data-bison-fute="accidents" style="pointer-events: none;">
+                        <div class="legend-color" style="background: transparent; width: 18px; height: 18px; text-align: center; line-height: 18px;">⚠️</div>
+                        <div class="legend-label">Accidents en cours</div>
+                        <div class="legend-count"></div>
+                    </div>
+
+                    <div style="margin-top: 10px; padding: 8px; background: #f8f9fa; border-radius: 6px; font-size: 0.75rem; color: #666; text-align: center;">
+                        💡 Cliquez sur le titre pour afficher/masquer
+                    </div>
+                </div>
+
+                <div class="legend-section">
+                    <div class="legend-title" onclick="toggleCities()" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+                        <span>Villes Principales</span>
+                        <span id="citiesToggleIcon" style="font-size: 1.2rem; transition: transform 0.3s;">👁️</span>
+                    </div>
+
+                    <div class="legend-item" data-city="main" style="pointer-events: none;">
+                        <div class="legend-color" style="background: #2C3E50; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #fff;"></div>
+                        <div class="legend-label">Chefs-lieux et grandes villes</div>
+                        <div class="legend-count">7</div>
                     </div>
                 </div>
 

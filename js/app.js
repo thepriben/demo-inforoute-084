@@ -73,11 +73,17 @@
         let wazeLayer = null;
         let wazeEnabled = false;
         let trafficMarkers = [];
+        let trafficVisible = true;
         let accidentMarkers = [];
         let accidentsVisible = false;
         let convoiMode = false;
         let constructionPolylines = [];
         let constructionVisible = false;
+        let boundaryVisible = true;
+        let bisonFuteMarkers = [];
+        let bisonFuteVisible = true;
+        let cityMarkers = [];
+        let citiesVisible = true;
         const dataRefreshState = {};
         
         // État de visibilité par hiérarchie
@@ -587,6 +593,158 @@
             }
         }
 
+        // ========== TERRITOIRE (LIMITE VAUCLUSE) ==========
+
+        window.toggleBoundary = function() {
+            boundaryVisible = !boundaryVisible;
+
+            const icon = document.getElementById('boundaryToggleIcon');
+            const title = document.querySelector('.legend-section:has([id="boundaryToggleIcon"]) .legend-title');
+            const legendItems = document.querySelectorAll('[data-boundary]');
+
+            if (boundaryVisible) {
+                if (window.boundaryLayer && !window.map.hasLayer(window.boundaryLayer)) {
+                    window.boundaryLayer.addTo(window.map);
+                }
+                if (icon) {
+                    icon.textContent = '👁️';
+                    icon.style.transform = 'scale(1.2)';
+                }
+                if (title) title.style.fontWeight = '700';
+                legendItems.forEach(item => {
+                    item.style.opacity = '1';
+                });
+                console.log('✓ Limite départementale affichée');
+            } else {
+                if (window.boundaryLayer && window.map.hasLayer(window.boundaryLayer)) {
+                    window.map.removeLayer(window.boundaryLayer);
+                }
+                if (icon) {
+                    icon.textContent = '👁️‍🗨️';
+                    icon.style.transform = 'scale(1)';
+                }
+                if (title) title.style.fontWeight = '600';
+                legendItems.forEach(item => {
+                    item.style.opacity = '0.5';
+                });
+                console.log('✗ Limite départementale masquée');
+            }
+        };
+
+        // ========== STATIONS DE COMPTAGE ==========
+
+        window.toggleTraffic = function() {
+            trafficVisible = !trafficVisible;
+
+            const icon = document.getElementById('trafficToggleIcon');
+            const title = document.querySelector('.legend-section:has([id="trafficToggleIcon"]) .legend-title');
+            const legendItems = document.querySelectorAll('[data-traffic]');
+
+            if (trafficVisible) {
+                trafficMarkers.forEach(marker => {
+                    if (!window.map.hasLayer(marker)) marker.addTo(window.map);
+                });
+                if (icon) {
+                    icon.textContent = '👁️';
+                    icon.style.transform = 'scale(1.2)';
+                }
+                if (title) title.style.fontWeight = '700';
+                legendItems.forEach(item => {
+                    item.style.opacity = '1';
+                });
+                console.log(`✓ ${trafficMarkers.length} stations de comptage affichées`);
+            } else {
+                trafficMarkers.forEach(marker => {
+                    if (window.map.hasLayer(marker)) window.map.removeLayer(marker);
+                });
+                if (icon) {
+                    icon.textContent = '👁️‍🗨️';
+                    icon.style.transform = 'scale(1)';
+                }
+                if (title) title.style.fontWeight = '600';
+                legendItems.forEach(item => {
+                    item.style.opacity = '0.5';
+                });
+                console.log('✗ Stations de comptage masquées');
+            }
+        };
+
+        // ========== ÉVÉNEMENTS ROUTIERS / BISON FUTÉ ==========
+
+        window.toggleBisonFute = function() {
+            bisonFuteVisible = !bisonFuteVisible;
+
+            const icon = document.getElementById('bisonFuteToggleIcon');
+            const title = document.querySelector('.legend-section:has([id="bisonFuteToggleIcon"]) .legend-title');
+            const legendItems = document.querySelectorAll('[data-bison-fute]');
+
+            if (bisonFuteVisible) {
+                bisonFuteMarkers.forEach(marker => {
+                    if (!window.map.hasLayer(marker)) marker.addTo(window.map);
+                });
+                if (icon) {
+                    icon.textContent = '👁️';
+                    icon.style.transform = 'scale(1.2)';
+                }
+                if (title) title.style.fontWeight = '700';
+                legendItems.forEach(item => {
+                    item.style.opacity = '1';
+                });
+                console.log(`✓ ${bisonFuteMarkers.length} événements routiers affichés`);
+            } else {
+                bisonFuteMarkers.forEach(marker => {
+                    if (window.map.hasLayer(marker)) window.map.removeLayer(marker);
+                });
+                if (icon) {
+                    icon.textContent = '👁️‍🗨️';
+                    icon.style.transform = 'scale(1)';
+                }
+                if (title) title.style.fontWeight = '600';
+                legendItems.forEach(item => {
+                    item.style.opacity = '0.5';
+                });
+                console.log('✗ Événements routiers masqués');
+            }
+        };
+
+        // ========== VILLES PRINCIPALES ==========
+
+        window.toggleCities = function() {
+            citiesVisible = !citiesVisible;
+
+            const icon = document.getElementById('citiesToggleIcon');
+            const title = document.querySelector('.legend-section:has([id="citiesToggleIcon"]) .legend-title');
+            const legendItems = document.querySelectorAll('[data-city]');
+
+            if (citiesVisible) {
+                cityMarkers.forEach(marker => {
+                    if (!window.map.hasLayer(marker)) marker.addTo(window.map);
+                });
+                if (icon) {
+                    icon.textContent = '👁️';
+                    icon.style.transform = 'scale(1.2)';
+                }
+                if (title) title.style.fontWeight = '700';
+                legendItems.forEach(item => {
+                    item.style.opacity = '1';
+                });
+                console.log(`✓ ${cityMarkers.length} villes principales affichées`);
+            } else {
+                cityMarkers.forEach(marker => {
+                    if (window.map.hasLayer(marker)) window.map.removeLayer(marker);
+                });
+                if (icon) {
+                    icon.textContent = '👁️‍🗨️';
+                    icon.style.transform = 'scale(1)';
+                }
+                if (title) title.style.fontWeight = '600';
+                legendItems.forEach(item => {
+                    item.style.opacity = '0.5';
+                });
+                console.log('✗ Villes principales masquées');
+            }
+        };
+
         async function toggleWazeTraffic() {
             wazeEnabled = !wazeEnabled;
             
@@ -768,6 +926,9 @@
                         fillOpacity: 0.05
                     }
                 }).addTo(window.map);
+
+                // Exposer la couche pour le toggle visibilité
+                window.boundaryLayer = boundaryLayer;
                 
                 // Ajuster la vue sur le département
                 map.fitBounds(boundaryLayer.getBounds(), { padding: [20, 20] });
@@ -2185,6 +2346,9 @@
                     stationType: 'counting'  // Pour identification lors du toggle trafic
                 }).addTo(window.map);
 
+                // Stocker pour le toggle de visibilité
+                trafficMarkers.push(marker);
+
                 // Popup avec les informations de comptage
                 const popupContent = `
                     <div class="route-popup">
@@ -2764,6 +2928,9 @@
                             iconAnchor: [15, 15]
                         })
                     }).addTo(window.map);
+
+                    // Stocker pour le toggle de visibilité
+                    bisonFuteMarkers.push(marker);
                     
                     // Popup avec les informations
                     const startDate = props.start_time ? new Date(props.start_time).toLocaleString('fr-FR') : 'N/A';
@@ -2830,7 +2997,7 @@
 
         cities.forEach(city => {
             const radius = city.size === 'large' ? 8 : city.size === 'medium' ? 6 : 4;
-            L.circleMarker(city.coords, {
+            const cityMarker = L.circleMarker(city.coords, {
                 radius: radius,
                 fillColor: '#2C3E50',
                 color: 'white',
@@ -2838,6 +3005,9 @@
                 opacity: 1,
                 fillOpacity: 0.9
             }).addTo(window.map).bindPopup(`<strong>${city.name}</strong>`);
+
+            // Stocker pour le toggle de visibilité
+            cityMarkers.push(cityMarker);
         });
 
         // Gestion des clics sur la légende (hiérarchie uniquement, si pas de handler inline)
