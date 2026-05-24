@@ -912,57 +912,48 @@
             border-radius: 8px;
             padding: 12px 14px;
             font-size: 0.78rem;
-            line-height: 1.45;
+            line-height: 1.55;
             color: #2C3E50;
         }
 
-        .credits-line {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            gap: 10px;
-            padding: 4px 0;
-        }
-
-        .credits-line + .credits-line {
-            border-top: 1px dashed #ecf0f1;
-        }
-
-        .credits-line .credits-label {
-            color: #7f8c8d;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            flex-shrink: 0;
-        }
-
-        .credits-line a,
-        .credits-line strong {
+        .credits-headline {
             font-weight: 700;
             color: #2C3E50;
-            text-decoration: none;
-            text-align: right;
-            word-break: break-all;
+            margin-bottom: 8px;
         }
 
-        .credits-line a {
+        .credits-list {
+            list-style: disc;
+            padding-left: 18px;
+            margin: 0;
+        }
+
+        .credits-list li + li {
+            margin-top: 4px;
+        }
+
+        .credits-list .credits-key {
+            color: #5b6770;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+
+        .credits-list .credits-sep {
+            color: #bdc3c7;
+            margin: 0 4px;
+        }
+
+        .credits-list a {
             color: #3498DB;
+            font-weight: 600;
+            text-decoration: none;
+            word-break: break-all;
             transition: color 0.18s;
         }
 
-        .credits-line a:hover {
+        .credits-list a:hover {
             color: #1f6391;
             text-decoration: underline;
-        }
-
-        .credits-note {
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid #ecf0f1;
-            font-size: 0.7rem;
-            color: #7f8c8d;
-            text-align: center;
-            font-style: italic;
         }
 
         /* === Familles de sections de la sidebar === */
