@@ -910,23 +910,23 @@
             background: white;
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 10px 12px;
-            font-size: 0.72rem;
-            line-height: 1.5;
+            padding: 8px 10px;
+            font-size: 0.68rem;
+            line-height: 1.45;
             color: #2C3E50;
         }
 
         .credits-headline {
             font-weight: 700;
             color: #2C3E50;
-            margin-bottom: 4px;
-            font-size: 0.72rem;
+            margin-bottom: 3px;
+            font-size: 0.68rem;
         }
 
         .credits-author {
             margin: 0 0 6px 0;
             color: #5b6770;
-            font-size: 0.72rem;
+            font-size: 0.68rem;
         }
 
         .credits-author a {
@@ -944,9 +944,6 @@
         .credits-repo {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            font-size: 0.72rem;
-            color: #5b6770;
         }
 
         .credits-repo a {
