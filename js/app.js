@@ -1831,7 +1831,8 @@
             const segmentsEl = document.getElementById('networkStat-segments');
             const lengthEl = document.getElementById('networkStat-length');
             const trafficEl = document.getElementById('networkStat-traffic');
-            const structuresEl = document.getElementById('networkStat-structures');
+            const bridgesEl = document.getElementById('networkStat-bridges');
+            const tunnelsEl = document.getElementById('networkStat-tunnels');
             if (!refsEl) return;
 
             const refs = Object.keys(window.routePolylines || {});
@@ -1853,8 +1854,9 @@
             segmentsEl.textContent = totalSegments.toLocaleString('fr-FR');
             lengthEl.textContent = totalKm >= 1
                 ? `${Math.round(totalKm).toLocaleString('fr-FR')} km`
-                : '— km';
-            structuresEl.textContent = `${bridgeCount} pont${bridgeCount > 1 ? 's' : ''} · ${tunnelCount} tunnel${tunnelCount > 1 ? 's' : ''}`;
+                : '—';
+            bridgesEl.textContent = bridgeCount.toLocaleString('fr-FR');
+            tunnelsEl.textContent = tunnelCount.toLocaleString('fr-FR');
 
             // Trafic MJA depuis les marqueurs de comptage chargés
             const mjaValues = [];
@@ -1874,7 +1876,7 @@
                 const fmt = v => v >= 1000 ? `${Math.round(v / 1000)}k` : String(v);
                 trafficEl.textContent = `${fmt(min)} – ${fmt(max)} véh/j`;
             } else {
-                trafficEl.textContent = '— véh/j';
+                trafficEl.textContent = '—';
             }
         }
 

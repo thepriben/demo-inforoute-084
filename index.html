@@ -259,27 +259,30 @@
 
                 <div class="legend-section">
                     <div class="legend-title">Informations Réseau</div>
-                    <div class="info-box" id="networkStatsBox">
-                        <h3>Statistiques calculées</h3>
-                        <div class="stat">
-                            <span>Routes uniques (réf.)</span>
-                            <span class="stat-value" id="networkStat-refs">…</span>
+                    <div class="network-stats" id="networkStatsBox">
+                        <div class="network-tile">
+                            <div class="network-tile-value" id="networkStat-refs">…</div>
+                            <div class="network-tile-label">Routes</div>
                         </div>
-                        <div class="stat">
-                            <span>Tronçons OSM</span>
-                            <span class="stat-value" id="networkStat-segments">…</span>
+                        <div class="network-tile">
+                            <div class="network-tile-value" id="networkStat-segments">…</div>
+                            <div class="network-tile-label">Tronçons OSM</div>
                         </div>
-                        <div class="stat">
-                            <span>Longueur cumulée</span>
-                            <span class="stat-value" id="networkStat-length">…</span>
+                        <div class="network-tile network-tile-wide">
+                            <div class="network-tile-value" id="networkStat-length">…</div>
+                            <div class="network-tile-label">Longueur cumulée</div>
                         </div>
-                        <div class="stat">
-                            <span>Trafic MJA min / max</span>
-                            <span class="stat-value" id="networkStat-traffic">…</span>
+                        <div class="network-tile network-tile-wide">
+                            <div class="network-tile-value" id="networkStat-traffic">…</div>
+                            <div class="network-tile-label">Trafic MJA min / max</div>
                         </div>
-                        <div class="stat">
-                            <span>Ponts &amp; tunnels</span>
-                            <span class="stat-value" id="networkStat-structures">…</span>
+                        <div class="network-tile">
+                            <div class="network-tile-value" id="networkStat-bridges">…</div>
+                            <div class="network-tile-label">Ponts</div>
+                        </div>
+                        <div class="network-tile">
+                            <div class="network-tile-value" id="networkStat-tunnels">…</div>
+                            <div class="network-tile-label">Tunnels</div>
                         </div>
                     </div>
                 </div>

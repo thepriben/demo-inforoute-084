@@ -916,6 +916,41 @@
             color: #2C3E50;
         }
 
+        /* === Tuiles "Informations Réseau" === */
+        .network-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .network-tile {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            text-align: center;
+        }
+
+        .network-tile-wide {
+            grid-column: 1 / -1;
+        }
+
+        .network-tile-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #2C3E50;
+            line-height: 1.15;
+        }
+
+        .network-tile-label {
+            font-size: 0.65rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-top: 3px;
+        }
+
         .credits-author {
             margin: 0 0 6px 0;
             color: #5b6770;
