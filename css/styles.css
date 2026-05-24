@@ -49,12 +49,12 @@
         .header {
             background: linear-gradient(135deg, #2C3E50 0%, #34495E 100%);
             color: white;
-            padding: 12px 24px;
+            padding: 18px 32px;
             position: relative;
             overflow: hidden;
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 20px;
         }
 
         .header::before {
@@ -69,11 +69,12 @@
         }
 
         .header h1 {
-            font-size: 1.6rem;
+            font-size: 1.95rem;
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             position: relative;
             z-index: 1;
+            letter-spacing: 0.2px;
         }
 
         .header .subtitle {
@@ -86,9 +87,9 @@
 
         .header .dept-code {
             position: absolute;
-            top: 20px;
-            right: 40px;
-            font-size: 4rem;
+            top: 14px;
+            right: 28px;
+            font-size: 3.4rem;
             font-weight: 700;
             opacity: 0.15;
             font-family: 'JetBrains Mono', monospace;
@@ -98,7 +99,7 @@
             display: grid;
             grid-template-columns: 320px 1fr;
             gap: 0;
-            height: calc(100vh - 140px);
+            height: calc(100vh - 165px);
             min-height: 600px;
         }
 
@@ -895,6 +896,73 @@
             padding: 4px 2px;
             color: white;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+        }
+
+        /* === Crédits (pied de sidebar) === */
+        .credits-section .legend-title {
+            font-size: 0.8rem;
+            color: #5b6770;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .credits-box {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-size: 0.78rem;
+            line-height: 1.45;
+            color: #2C3E50;
+        }
+
+        .credits-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 10px;
+            padding: 4px 0;
+        }
+
+        .credits-line + .credits-line {
+            border-top: 1px dashed #ecf0f1;
+        }
+
+        .credits-line .credits-label {
+            color: #7f8c8d;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            flex-shrink: 0;
+        }
+
+        .credits-line a,
+        .credits-line strong {
+            font-weight: 700;
+            color: #2C3E50;
+            text-decoration: none;
+            text-align: right;
+            word-break: break-all;
+        }
+
+        .credits-line a {
+            color: #3498DB;
+            transition: color 0.18s;
+        }
+
+        .credits-line a:hover {
+            color: #1f6391;
+            text-decoration: underline;
+        }
+
+        .credits-note {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #ecf0f1;
+            font-size: 0.7rem;
+            color: #7f8c8d;
+            text-align: center;
+            font-style: italic;
         }
 
         /* === Familles de sections de la sidebar === */
