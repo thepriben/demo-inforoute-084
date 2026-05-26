@@ -546,6 +546,8 @@
         .route-popup {
             font-family: 'DM Sans', sans-serif;
             max-width: 350px;
+            max-height: 420px;
+            overflow-y: auto;
         }
 
         .route-popup h3 {
@@ -932,41 +934,34 @@
             font-size: 0.7rem;
         }
 
-        /* Onglets dans le popup route (Détails / Infobox Wikidata) */
-        .route-popup .popup-tabs {
-            display: flex;
-            gap: 2px;
-            margin: -8px -8px 10px -8px;
-            padding: 0 8px;
-            border-bottom: 1px solid #ecf0f1;
+        /* Infobox Wikidata intégrée au popup route (lecture seule, auto-chargée) */
+        .route-popup .popup-infobox-section {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 2px solid #ecf0f1;
         }
 
-        .route-popup .popup-tab-btn {
-            background: transparent;
-            border: none;
-            border-bottom: 2px solid transparent;
-            padding: 8px 10px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #95A5A6;
-            cursor: pointer;
-            font-family: inherit;
-            transition: color 0.15s, border-color 0.15s;
+        .route-popup .popup-infobox-title {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+            user-select: none;
+            pointer-events: none;
         }
 
-        .route-popup .popup-tab-btn:hover {
-            color: #34495E;
+        .popup-infobox-loading,
+        .popup-infobox-host .infobox-error {
+            padding: 12px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.78rem;
         }
 
-        .route-popup .popup-tab-btn.active {
-            color: #2C3E50;
-            border-bottom-color: #3498DB;
-        }
-
-        .route-popup .popup-tab-panel {
-            min-height: 50px;
-            max-height: 420px;
-            overflow-y: auto;
+        .popup-infobox-host .infobox-error {
+            color: #E74C3C;
         }
 
         .wikidata-infobox {
@@ -974,6 +969,117 @@
             border: 1px solid #ecf0f1;
             border-radius: 6px;
             padding: 10px 12px;
+        }
+
+        .infobox-shield-wrap {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .infobox-shield {
+            max-width: 100%;
+            max-height: 72px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12));
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .infobox-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .infobox-header-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .infobox-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #2C3E50;
+        }
+
+        .infobox-description {
+            font-size: 0.76rem;
+            color: #7f8c8d;
+            font-style: italic;
+            margin-top: 2px;
+        }
+
+        .infobox-qid {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: #95A5A6;
+            flex-shrink: 0;
+            padding: 2px 6px;
+            border: 1px solid #ecf0f1;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+
+        .infobox-illustration {
+            display: block;
+            max-width: 100%;
+            max-height: 140px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin: 8px auto;
+            border: 1px solid #ecf0f1;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .infobox-extract {
+            font-size: 0.76rem;
+            line-height: 1.5;
+            color: #2c3e50;
+            background: #f8f9fa;
+            border-left: 3px solid #3498DB;
+            padding: 8px 10px;
+            border-radius: 4px;
+            margin: 8px 0;
+        }
+
+        .infobox-table {
+            width: 100%;
+            font-size: 0.76rem;
+            border-collapse: collapse;
+        }
+
+        .infobox-prop-label {
+            padding: 4px 8px 4px 0;
+            font-weight: 600;
+            color: #5b6770;
+            vertical-align: top;
+            white-space: nowrap;
+        }
+
+        .infobox-prop-value {
+            padding: 4px 0;
+            color: #2c3e50;
+        }
+
+        .infobox-empty {
+            font-size: 0.76rem;
+            color: #95A5A6;
+            font-style: italic;
+        }
+
+        .infobox-source {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #ecf0f1;
+            font-size: 0.65rem;
+            color: #bdc3c7;
+            text-align: right;
         }
 
         /* Pictogrammes de vitesse type panneau rond */

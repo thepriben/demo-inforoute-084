@@ -145,11 +145,11 @@
             cell.innerHTML = lines.join('<br>');
         }
 
-        function renderFreshnessBadge(element, { generatedAt, scheduleKey, errorMsg } = {}) {
+        function renderFreshnessBadge(element, { generatedAt, scheduleKey, errorMsg, layerVisible } = {}) {
             if (!element) return;
             const config = FRESHNESS_SCHEDULES[scheduleKey] || {};
             const generatedAtMs = generatedAt ? new Date(generatedAt).getTime() : null;
-            const state = freshnessState(generatedAtMs, config);
+            let state = freshnessState(generatedAtMs, config);
 
             if (generatedAt && config.cron) {
                 const current = latestCacheByGroup[scheduleKey];
@@ -189,12 +189,23 @@
             ].filter(Boolean);
             element.title = tooltipLines.join('\n');
 
-            if (element.dataset.layerVisible === 'false') {
+            if (layerVisible === undefined && element.id && typeof isFreshnessBadgeLayerVisible === 'function') {
+                layerVisible = isFreshnessBadgeLayerVisible(element.id);
+            } else if (layerVisible === undefined) {
+                layerVisible = element.dataset.layerVisible !== 'false';
+            }
+
+            element.dataset.layerVisible = layerVisible ? 'true' : 'false';
+            const layerHidden = !layerVisible;
+
+            if (layerHidden) {
                 state = { color: '#BDC3C7', tone: '#ECF0F1', label: 'masqué', dotLabel: 'hidden' };
+            } else if (!config.intervalMs && generatedAtMs) {
+                state = { color: '#27AE60', tone: '#27AE6022', label: 'snapshot', dotLabel: 'static' };
             }
 
             const errorIcon = errorMsg ? '<span style="margin-left:4px;">⚠</span>' : '';
-            element.classList.toggle('is-layer-hidden', element.dataset.layerVisible === 'false');
+            element.classList.toggle('is-layer-hidden', layerHidden);
             element.innerHTML = `<span class="freshness-pill" style="background:${state.tone};color:${state.color};"><span class="freshness-dot" style="background:${state.color};"></span>${ageText}${nextText}${errorIcon}</span>`;
         }
 
@@ -208,6 +219,9 @@
                 }
             });
             Object.keys(FRESHNESS_SCHEDULES).forEach(updateRefreshFormulaCell);
+            if (typeof syncLegendChrome === 'function') {
+                document.querySelectorAll('.legend-family').forEach(refreshFamilyMeta);
+            }
         }
 
         window.setInterval(refreshAllBadges, 60000);
@@ -222,79 +236,6 @@
         });
 
         // ========== FAMILLES DE SECTIONS DE LA SIDEBAR (collapsibles) ==========
-
-        function isToggleIconVisible(toggleIconId) {
-            const icon = document.getElementById(toggleIconId);
-            return icon ? !icon.classList.contains('is-hidden') : false;
-        }
-
-        function countHierarchySubLayersVisible() {
-            let visible = 0;
-            ['regional', 'territorial', 'local'].forEach(hierarchy => {
-                const item = document.querySelector(`[data-hierarchy="${hierarchy}"]`);
-                if (!item) return;
-                const opacity = parseFloat(item.style.opacity || '1');
-                if (opacity > 0.5) visible++;
-            });
-            return visible;
-        }
-
-        function getFamilyLayerCounts(familyId) {
-            switch (familyId) {
-                case 'factual': {
-                    let visible = 1;
-                    let total = 1;
-                    total += 3;
-                    visible += countHierarchySubLayersVisible();
-                    total += 1;
-                    if (isToggleIconVisible('constructionToggleIcon')) visible++;
-                    total += 1;
-                    if (isToggleIconVisible('citiesToggleIcon')) visible++;
-                    const limitations = document.getElementById('limitationsLegend');
-                    if (limitations && limitations.style.display !== 'none') {
-                        total += 1;
-                        if (document.getElementById('limitsBtn')?.classList.contains('is-active')) visible++;
-                    }
-                    return { visible, total };
-                }
-                case 'stats': {
-                    let visible = 0;
-                    const total = 2;
-                    if (isToggleIconVisible('accidentToggleIcon')) visible++;
-                    if (isToggleIconVisible('trafficToggleIcon') || document.getElementById('wazeBtn')?.classList.contains('is-active')) {
-                        visible++;
-                    }
-                    return { visible, total };
-                }
-                case 'realtime':
-                    return {
-                        visible: isToggleIconVisible('bisonFuteToggleIcon') ? 1 : 0,
-                        total: 1
-                    };
-                default:
-                    return null;
-            }
-        }
-
-        function isFreshnessBadgeLayerVisible(badgeId) {
-            switch (badgeId) {
-                case 'freshness-boundary':
-                case 'freshness-wikidata':
-                    return true;
-                case 'freshness-hierarchy':
-                    return isToggleIconVisible('hierarchyToggleIcon');
-                case 'freshness-construction':
-                    return isToggleIconVisible('constructionToggleIcon');
-                case 'freshness-accidents':
-                    return isToggleIconVisible('accidentToggleIcon');
-                case 'freshness-traffic':
-                    return isToggleIconVisible('trafficToggleIcon') || document.getElementById('wazeBtn')?.classList.contains('is-active');
-                case 'freshness-bison-fute':
-                    return isToggleIconVisible('bisonFuteToggleIcon');
-                default:
-                    return true;
-            }
-        }
 
         function syncFreshnessBadgeVisibility() {
             document.querySelectorAll('.freshness-badge[id]').forEach(element => {
@@ -384,6 +325,7 @@
             { id: 'P31',   label: 'Nature' },
             { id: 'P17',   label: 'Pays' },
             { id: 'P131',  label: 'Localisation' },
+            { id: 'P1813', label: 'Nom abrégé' },
             { id: 'P2043', label: 'Longueur' },
             { id: 'P126',  label: 'Gestionnaire' },
             { id: 'P137',  label: 'Opérateur' },
@@ -391,8 +333,11 @@
             { id: 'P1622', label: 'Sens de circulation' },
             { id: 'P571',  label: 'Date de création' },
             { id: 'P729',  label: 'Mise en service' },
-            { id: 'P281',  label: 'Code postal' }
+            { id: 'P1619', label: 'Date d\'ouverture' }
         ];
+
+        const WIKIDATA_SHIELD_PROPS = ['P1766', 'P154'];
+        const WIKIDATA_IMAGE_PROPS = ['P18'];
 
         function commonsImageUrl(filename, width = 400) {
             return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}?width=${width}`;
@@ -457,10 +402,9 @@
             return out;
         }
 
-        function formatWikidataValue(item, labels) {
+        function formatWikidataValuePlain(item, labels) {
             if (item.type === 'wikibase-entityid' && item.value.id) {
-                const label = labels[item.value.id] || item.value.id;
-                return `<a href="https://www.wikidata.org/wiki/${item.value.id}" target="_blank" style="color:#3498DB; text-decoration:none;">${escapeHtml(label)}</a>`;
+                return escapeHtml(labels[item.value.id] || item.value.id);
             }
             if (item.type === 'quantity') {
                 const amount = item.value.amount.replace(/^\+/, '');
@@ -479,6 +423,27 @@
             return '—';
         }
 
+        function firstCommonsFilename(claims, propIds) {
+            for (const propId of propIds) {
+                const filename = claims[propId]?.[0]?.value;
+                if (typeof filename === 'string' && filename.trim()) return filename.trim();
+            }
+            return null;
+        }
+
+        function attachRoutePopupInfobox(polyline) {
+            polyline.on('popupopen', () => {
+                const popupEl = polyline.getPopup()?.getElement();
+                if (!popupEl) return;
+                const host = popupEl.querySelector('.popup-infobox-host');
+                if (!host || host.dataset.loaded === '1') return;
+                host.dataset.loaded = '1';
+                const qid = host.dataset.qid;
+                const containerId = host.id;
+                if (qid && containerId) loadWikidataInfobox(qid, containerId);
+            });
+        }
+
         async function loadWikidataInfobox(qid, containerId) {
             const container = document.getElementById(containerId);
             if (!container) return;
@@ -488,7 +453,7 @@
                 return;
             }
 
-            container.innerHTML = `<div style="padding:16px; text-align:center; color:#7f8c8d; font-size:0.8rem;">⏳ Chargement de l'infobox Wikidata…</div>`;
+            container.innerHTML = `<div class="popup-infobox-loading">Chargement de l'infobox…</div>`;
 
             try {
                 const entity = await fetchWikidataItem(qid);
@@ -511,9 +476,12 @@
 
                 const labels = entityIds.size ? await fetchWikidataLabels([...entityIds]).catch(() => ({})) : {};
 
-                const imageFilename = claims['P18']?.[0]?.value || null;
-                const imageThumbUrl = imageFilename ? commonsImageUrl(imageFilename, 480) : null;
-                const imageFullUrl = imageFilename ? commonsImageUrl(imageFilename, 1200) : null;
+                const shieldFilename = firstCommonsFilename(claims, WIKIDATA_SHIELD_PROPS);
+                const illustrationFilename = shieldFilename
+                    ? null
+                    : firstCommonsFilename(claims, WIKIDATA_IMAGE_PROPS);
+                const shieldUrl = shieldFilename ? commonsImageUrl(shieldFilename, 220) : null;
+                const illustrationUrl = illustrationFilename ? commonsImageUrl(illustrationFilename, 480) : null;
 
                 const frWikiTitle = entity.sitelinks?.frwiki?.title;
                 const wikipediaSummary = frWikiTitle ? await fetchWikipediaSummary(frWikiTitle) : null;
@@ -523,61 +491,48 @@
                     .map(prop => {
                         const values = claims[prop.id]
                             .slice(0, 3)
-                            .map(c => formatWikidataValue(c, labels))
+                            .map(c => formatWikidataValuePlain(c, labels))
                             .join('<br>');
                         return `
                             <tr>
-                                <td style="padding:4px 8px; font-weight:600; color:#5b6770; vertical-align:top; white-space:nowrap;">${prop.label}</td>
-                                <td style="padding:4px 8px; color:#2c3e50;">${values}</td>
+                                <td class="infobox-prop-label">${prop.label}</td>
+                                <td class="infobox-prop-value">${values}</td>
                             </tr>
                         `;
                     }).join('');
 
-                const sitelinks = entity.sitelinks || {};
-                const sitelinkDefs = [
-                    { key: 'frwiki', label: '📖 Wikipédia (fr)', baseUrl: 'https://fr.wikipedia.org/wiki/' },
-                    { key: 'enwiki', label: '📖 Wikipedia (en)', baseUrl: 'https://en.wikipedia.org/wiki/' },
-                    { key: 'commonswiki', label: '📷 Commons', baseUrl: 'https://commons.wikimedia.org/wiki/' },
-                    { key: 'specieswiki', label: '🧬 Wikispecies', baseUrl: 'https://species.wikimedia.org/wiki/' }
-                ];
-                const sitelinksHtml = sitelinkDefs
-                    .filter(def => sitelinks[def.key])
-                    .map(def => `<a href="${def.baseUrl}${encodeURIComponent(sitelinks[def.key].title.replace(/ /g, '_'))}" target="_blank" style="color:#3498DB; margin-right:10px; text-decoration:none; font-weight:600; font-size:0.78rem;">${def.label}</a>`)
-                    .join('');
-
                 const html = `
                     <div class="wikidata-infobox">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px;">
-                            <div style="flex:1; min-width:0;">
-                                <div style="font-size:1rem; font-weight:700; color:#2C3E50;">${escapeHtml(labelFr)}</div>
-                                ${descriptionFr ? `<div style="font-size:0.78rem; color:#7f8c8d; font-style:italic; margin-top:2px;">${escapeHtml(descriptionFr)}</div>` : ''}
+                        ${shieldUrl ? `
+                            <div class="infobox-shield-wrap">
+                                <img class="infobox-shield" src="${shieldUrl}" alt="Panneau routier" loading="lazy">
                             </div>
-                            <a href="https://www.wikidata.org/wiki/${qid}" target="_blank" title="Ouvrir sur Wikidata" style="font-family:'JetBrains Mono', monospace; font-size:0.7rem; color:#9B59B6; text-decoration:none; flex-shrink:0; padding:2px 6px; border:1px solid #9B59B6; border-radius:4px;">${qid}</a>
+                        ` : ''}
+                        <div class="infobox-header">
+                            <div class="infobox-header-text">
+                                <div class="infobox-title">${escapeHtml(labelFr)}</div>
+                                ${descriptionFr ? `<div class="infobox-description">${escapeHtml(descriptionFr)}</div>` : ''}
+                            </div>
+                            <span class="infobox-qid">${qid}</span>
                         </div>
 
-                        ${imageThumbUrl ? `
-                            <a href="${imageFullUrl}" target="_blank" style="display:block; margin:8px 0;">
-                                <img src="${imageThumbUrl}" alt="" loading="lazy" style="max-width:100%; max-height:180px; object-fit:cover; border-radius:6px; display:block; margin:auto; border:1px solid #ecf0f1;">
-                            </a>
+                        ${illustrationUrl ? `
+                            <img class="infobox-illustration" src="${illustrationUrl}" alt="" loading="lazy">
                         ` : ''}
 
                         ${wikipediaSummary?.extract ? `
-                            <div style="font-size:0.78rem; line-height:1.5; color:#2c3e50; background:#f8f9fa; border-left:3px solid #3498DB; padding:8px 10px; border-radius:4px; margin:8px 0;">
+                            <div class="infobox-extract">
                                 ${escapeHtml(wikipediaSummary.extract.slice(0, 320))}${wikipediaSummary.extract.length > 320 ? '…' : ''}
                             </div>
                         ` : ''}
 
                         ${claimsRows ? `
-                            <table style="width:100%; font-size:0.78rem; border-collapse:collapse;">
+                            <table class="infobox-table">
                                 ${claimsRows}
                             </table>
-                        ` : '<div style="font-size:0.78rem; color:#95A5A6; font-style:italic;">Aucune propriété structurée renseignée.</div>'}
+                        ` : '<div class="infobox-empty">Aucune propriété structurée renseignée.</div>'}
 
-                        ${sitelinksHtml ? `
-                            <div style="margin-top:10px; padding-top:8px; border-top:1px solid #ecf0f1;">
-                                ${sitelinksHtml}
-                            </div>
-                        ` : ''}
+                        <div class="infobox-source">Données issues de Wikidata</div>
                     </div>
                 `;
 
@@ -586,39 +541,15 @@
             } catch (error) {
                 console.error('Wikidata infobox error:', error);
                 container.innerHTML = `
-                    <div style="padding:14px; color:#E74C3C; text-align:center; font-size:0.8rem;">
-                        <strong>⚠️ Infobox indisponible</strong><br>
-                        <small style="color:#7f8c8d;">${escapeHtml(error.message)}</small><br>
-                        <a href="https://www.wikidata.org/wiki/${qid}" target="_blank" style="color:#3498DB; font-weight:600;">Voir sur Wikidata →</a>
+                    <div class="infobox-error">
+                        <strong>Infobox indisponible</strong><br>
+                        <small>${escapeHtml(error.message)}</small>
                     </div>
                 `;
             }
         }
 
         window.loadWikidataInfobox = loadWikidataInfobox;
-
-        // Bascule entre les onglets "Détails" et "Infobox Wikidata" d'un popup route.
-        window.switchPopupTab = function(buttonElement, tabName) {
-            const popup = buttonElement.closest('.route-popup');
-            if (!popup) return;
-
-            popup.querySelectorAll('.popup-tab-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.tab === tabName);
-            });
-            popup.querySelectorAll('.popup-tab-panel').forEach(panel => {
-                panel.style.display = panel.dataset.tab === tabName ? 'block' : 'none';
-            });
-
-            if (tabName === 'infobox') {
-                const panel = popup.querySelector('.popup-tab-panel[data-tab="infobox"]');
-                const qid = panel?.dataset.qid;
-                const containerId = panel?.dataset.containerId;
-                if (qid && containerId && !panel.dataset.loaded) {
-                    panel.dataset.loaded = '1';
-                    loadWikidataInfobox(qid, containerId);
-                }
-            }
-        };
 
         const hierarchyColors = {
             regional: '#E74C3C',
@@ -810,6 +741,61 @@
             territorial: true,
             local: true
         };
+
+        function getFamilyLayerCounts(familyId) {
+            switch (familyId) {
+                case 'factual': {
+                    let visible = 1;
+                    let total = 1;
+                    total += 3;
+                    visible += ['regional', 'territorial', 'local'].filter(h => hierarchyVisibility[h]).length;
+                    total += 1;
+                    if (constructionVisible) visible++;
+                    total += 1;
+                    if (citiesVisible) visible++;
+                    const limitations = document.getElementById('limitationsLegend');
+                    if (limitations && limitations.style.display !== 'none') {
+                        total += 1;
+                        if (document.getElementById('limitsBtn')?.classList.contains('is-active')) visible++;
+                    }
+                    return { visible, total };
+                }
+                case 'stats': {
+                    let visible = 0;
+                    const total = 2;
+                    if (accidentsVisible) visible++;
+                    if (trafficVisible || wazeEnabled) visible++;
+                    return { visible, total };
+                }
+                case 'realtime':
+                    return {
+                        visible: bisonFuteVisible ? 1 : 0,
+                        total: 1
+                    };
+                default:
+                    return null;
+            }
+        }
+
+        function isFreshnessBadgeLayerVisible(badgeId) {
+            switch (badgeId) {
+                case 'freshness-boundary':
+                case 'freshness-wikidata':
+                    return true;
+                case 'freshness-hierarchy':
+                    return hierarchyVisibility.regional || hierarchyVisibility.territorial || hierarchyVisibility.local;
+                case 'freshness-construction':
+                    return constructionVisible;
+                case 'freshness-accidents':
+                    return accidentsVisible;
+                case 'freshness-traffic':
+                    return trafficVisible || wazeEnabled;
+                case 'freshness-bison-fute':
+                    return bisonFuteVisible;
+                default:
+                    return true;
+            }
+        }
 
         function setSourceText(elementId, value) {
             const element = document.getElementById(elementId);
@@ -1498,6 +1484,7 @@
                     generatedAt: osmGeneratedAt,
                     scheduleKey: 'osm'
                 });
+                syncLegendChrome();
                 routesLoadingPopup.remove();
 
                 if (data.features && data.features.length > 0) {
@@ -1646,13 +1633,6 @@
                                     : null;
                                 const popupContent = `
                                     <div class="route-popup">
-                                        <div class="popup-tabs">
-                                            <button type="button" class="popup-tab-btn active" data-tab="details" onclick="switchPopupTab(this,'details')">Détails</button>
-                                            ${wikidataQid ? `
-                                                <button type="button" class="popup-tab-btn" data-tab="infobox" onclick="switchPopupTab(this,'infobox')" title="Infobox Wikidata (${wikidataQid})">📚 Infobox Wikidata</button>
-                                            ` : ''}
-                                        </div>
-                                        <div class="popup-tab-panel" data-tab="details">
                                         <h3>${roadName}</h3>
                                         <div class="detail"><strong>Référence&nbsp;:</strong> ${ref}</div>
                                         <div class="detail"><strong>Type&nbsp;:</strong> ${hierarchyLabel}</div>
@@ -1757,11 +1737,11 @@
                                                 `}
                                             </div>
                                         </div>
-                                        </div>
                                         ${wikidataQid ? `
-                                            <div class="popup-tab-panel" data-tab="infobox" data-qid="${wikidataQid}" data-container-id="${popupInfoboxContainerId}" style="display:none;">
-                                                <div id="${popupInfoboxContainerId}">
-                                                    <div style="padding:14px; text-align:center; color:#7f8c8d; font-size:0.8rem;">Cliquez sur l'onglet pour charger l'infobox</div>
+                                            <div class="popup-infobox-section">
+                                                <div class="popup-infobox-title">Infobox</div>
+                                                <div class="popup-infobox-host" id="${popupInfoboxContainerId}" data-qid="${wikidataQid}">
+                                                    <div class="popup-infobox-loading">Chargement…</div>
                                                 </div>
                                             </div>
                                         ` : ''}
@@ -1769,6 +1749,7 @@
                                 `;
 
                                 polyline.bindPopup(popupContent);
+                                if (wikidataQid) attachRoutePopupInfobox(polyline);
 
                                 // Effet de survol
                                 polyline.on('mouseover', function() {
@@ -2923,6 +2904,7 @@
                         scheduleKey: 'external',
                         errorMsg: 'Source réelle indisponible, démo affichée'
                     });
+                    syncLegendChrome();
                 } catch (error) {
                     console.error('❌ Échec du chargement des données de démonstration:', error);
                 }
@@ -3070,6 +3052,7 @@
                 scheduleKey: 'external',
                 errorMsg: geojsonData._cache?.error
             });
+            syncLegendChrome();
             
             console.log(`✓ Total stations affichées: ${totalStations} (année max ${latestYear})`);
             console.log('🚦 === FIN CHARGEMENT STATIONS DE COMPTAGE ===');
@@ -3090,6 +3073,7 @@
                     generatedAt: dataToUse._cache?.generated_at,
                     scheduleKey: 'static'
                 });
+                syncLegendChrome();
                 
                 console.log(`✓ ${features.length} accidents chargés pour le Vaucluse`);
                 console.log('Statistiques:', stats);
@@ -3213,6 +3197,7 @@
                     generatedAt: data._cache?.generated_at,
                     scheduleKey: 'osm'
                 });
+                syncLegendChrome();
                 const constructionWays = (data.features || [])
                     .map(geoJsonLineFeatureToWay)
                     .filter(Boolean);
@@ -3455,6 +3440,7 @@
                     scheduleKey: 'external',
                     errorMsg: data._cache?.error
                 });
+                syncLegendChrome();
                 
                 if (!data.features || data.features.length === 0) {
                     console.log('ℹ️ Aucun événement Info Routière dans le GeoJSON local');
