@@ -219,6 +219,48 @@
             font-family: 'JetBrains Mono', monospace;
         }
 
+        .quality-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .sidebar-quality-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+            border: 1px solid #3498DB;
+            background: #fff;
+            color: #3498DB;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-family: inherit;
+            font-size: 0.68rem;
+            font-weight: 600;
+            cursor: pointer;
+            line-height: 1.2;
+            text-transform: none;
+            letter-spacing: 0;
+            transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+        }
+
+        .sidebar-quality-btn:hover {
+            background: #ebf5fb;
+        }
+
+        .sidebar-quality-btn.is-active {
+            background: #3498DB;
+            color: #fff;
+            box-shadow: 0 2px 6px rgba(52, 152, 219, 0.35);
+        }
+
+        .sidebar-quality-btn-icon {
+            font-size: 0.85rem;
+            line-height: 1;
+        }
+
         .legend-item {
             display: flex;
             align-items: center;
@@ -372,8 +414,8 @@
         /* Panneau de qualité des données */
         .quality-panel {
             position: absolute;
-            top: 70px;
-            right: 20px;
+            top: 14px;
+            right: 14px;
             z-index: 999;
             background: white;
             border-radius: 12px;

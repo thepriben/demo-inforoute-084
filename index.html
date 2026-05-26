@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="css/styles.css?v=20260526-1">
+    <link rel="stylesheet" href="css/styles.css?v=20260526-2">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -258,7 +258,13 @@
                 </div>
 
                 <div class="legend-section">
-                    <div class="legend-title">Qualité OSM / Wikidata</div>
+                    <div class="legend-title quality-section-header">
+                        <span>Qualité OSM / Wikidata</span>
+                        <button type="button" class="sidebar-quality-btn" id="qualityBtn" onclick="toggleQualityPanel()" title="Ouvrir le panneau détaillé Qualité OSM (Wikidata, relations)">
+                            <span class="sidebar-quality-btn-icon" aria-hidden="true">🔍</span>
+                            <span class="sidebar-quality-btn-label">Panneau détaillé</span>
+                        </button>
+                    </div>
                     <span class="freshness-badge" id="freshness-wikidata" data-schedule-key="osm"></span>
                     <div id="wikidataSummary" style="background:white;border-radius:8px;border:1px solid #dfe6e9;padding:10px;">
                         <div style="font-size:0.8rem;color:#7f8c8d;">Calcul en cours…</div>
@@ -362,11 +368,8 @@
             <div class="sidebar-resizer" id="sidebarResizer" role="separator" aria-orientation="vertical" aria-label="Redimensionner la barre latérale" tabindex="0" title="Glissez pour redimensionner la barre latérale"></div>
 
             <div style="position: relative;">
-                <!-- Barre d'outils unifiée : 4 modes spéciaux groupés en haut à droite, sans chevauchement possible -->
+                <!-- Barre d'outils unifiée : modes spéciaux groupés en haut à droite -->
                 <div class="map-toolbar" role="toolbar" aria-label="Modes d'affichage spéciaux">
-                    <button type="button" class="map-tool" data-accent="#3498DB" onclick="toggleQualityPanel()" id="qualityBtn" title="Ouvrir le panneau Qualité des données OSM (Wikidata, relations)">
-                        <span class="map-tool-icon">🔍</span><span class="map-tool-label">Qualité OSM</span>
-                    </button>
                     <button type="button" class="map-tool" data-accent="#00A8E8" onclick="toggleWazeTraffic()" id="wazeBtn" title="Mettre en évidence les stations de comptage CD84">
                         <span class="map-tool-icon">📊</span><span class="map-tool-label">Comptages CD84</span>
                     </button>
@@ -398,6 +401,6 @@
 
     <script src="js/config.js?v=20260524-2"></script>
     <script src="js/api.js?v=20260524-2"></script>
-    <script src="js/app.js?v=20260525-2"></script>
+    <script src="js/app.js?v=20260526-1"></script>
 </body>
 </html>

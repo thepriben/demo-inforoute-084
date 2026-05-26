@@ -567,19 +567,18 @@
 
         function toggleQualityPanel() {
             const panel = document.getElementById('qualityPanel');
-            const btn = document.querySelector('button[onclick="toggleQualityPanel()"]');
-            
+            const btn = document.getElementById('qualityBtn');
+
             panel.classList.toggle('active');
-            
-            // Mettre le bouton en gras quand actif
+
             if (panel.classList.contains('active')) {
-                setToolActive('qualityBtn', true);
+                btn?.classList.add('is-active');
                 if (!panel.dataset.loaded) {
                     calculateQualityMetrics();
                     panel.dataset.loaded = 'true';
                 }
             } else {
-                setToolActive('qualityBtn', false);
+                btn?.classList.remove('is-active');
             }
         }
 
@@ -1819,7 +1818,6 @@
                 </div>
                 <div style="display:flex;gap:6px;">
                     <button onclick="highlightRoutesByWikidata(false)" style="flex:1;border:1px solid #E74C3C;background:white;color:#E74C3C;border-radius:5px;padding:6px;font-size:0.7rem;font-weight:600;cursor:pointer;">Voir les routes sans Wikidata</button>
-                    <button onclick="toggleQualityPanel()" title="Ouvrir le panneau Qualité OSM" style="border:1px solid #3498DB;background:white;color:#3498DB;border-radius:5px;padding:6px 10px;font-size:0.7rem;font-weight:600;cursor:pointer;">Détails →</button>
                 </div>
             `;
         }
