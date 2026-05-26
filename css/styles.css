@@ -49,12 +49,42 @@
         .header {
             background: linear-gradient(135deg, #2C3E50 0%, #34495E 100%);
             color: white;
-            padding: 18px 32px;
+            padding: 16px 28px;
             position: relative;
             overflow: hidden;
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 22px;
+        }
+
+        .header-logo-link {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 2;
+            text-decoration: none;
+            padding: 6px 10px 6px 4px;
+            border-radius: 12px;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .header-logo-link:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .header-logo-mark {
+            display: block;
+            width: 46px;
+            height: auto;
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.22));
+        }
+
+        .header-titles {
+            flex: 1;
+            min-width: 0;
         }
 
         .header::before {
@@ -78,21 +108,39 @@
         }
 
         .header .subtitle {
-            font-size: 1rem;
-            opacity: 0.9;
+            font-size: 0.95rem;
+            opacity: 0.88;
             font-family: 'JetBrains Mono', monospace;
             position: relative;
             z-index: 1;
         }
 
-        .header .dept-code {
-            position: absolute;
-            top: 14px;
-            right: 28px;
-            font-size: 3.4rem;
-            font-weight: 700;
-            opacity: 0.15;
-            font-family: 'JetBrains Mono', monospace;
+        @media (max-width: 900px) {
+            .header-logo-mark {
+                width: 38px;
+            }
+
+            .header h1 {
+                font-size: 1.45rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header {
+                flex-wrap: wrap;
+                gap: 12px;
+                padding: 14px 16px;
+            }
+
+            .header-titles {
+                order: 2;
+                flex: 1 1 100%;
+            }
+
+            #weather {
+                order: 1;
+                margin-left: auto;
+            }
         }
 
         .main-content {
