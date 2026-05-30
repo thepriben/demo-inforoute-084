@@ -37,8 +37,8 @@ QUERIES = {
     """,
     "construction-roads": """
         [out:json][timeout:60];
+        area["ISO3166-2"="FR-84"]->.dept;
         (
-          area["ISO3166-2"="FR-84"]->.dept;
           way(area.dept)["highway"="construction"];
           way(area.dept)["construction"="highway"];
           way(area.dept)["construction"]["highway"];
@@ -46,9 +46,6 @@ QUERIES = {
           way(area.dept)["highway"="proposed"];
           way(area.dept)["proposed"="highway"];
           way(area.dept)["proposed:highway"];
-          way(43.6,4.5,44.4,5.9)["highway"="construction"];
-          way(43.6,4.5,44.4,5.9)["construction"]["highway"];
-          way(43.6,4.5,44.4,5.9)["highway"="proposed"];
         );
         out geom;
     """,
@@ -260,14 +257,26 @@ def departmental_roads_to_geojson(data: dict[str, Any]) -> dict[str, Any]:
     return collection(features, len(elements))
 
 
+def construction_road_status(tags: dict[str, Any]) -> str | None:
+    if tags.get("highway") == "construction" or tags.get("construction") == "highway" or tags.get("construction:highway"):
+        return "construction"
+    if tags.get("highway") == "proposed" or tags.get("proposed") == "highway" or tags.get("proposed:highway"):
+        return "proposed"
+    return None
+
+
 def construction_roads_to_geojson(data: dict[str, Any]) -> dict[str, Any]:
-    features = [
-        feature
-        for element in data.get("elements", [])
-        if element.get("type") == "way"
-        for feature in [way_to_feature(element)]
-        if feature
-    ]
+    features = []
+    for element in data.get("elements", []):
+        if element.get("type") != "way":
+            continue
+        tags = element.get("tags") or {}
+        status = construction_road_status(tags)
+        if not status:
+            continue
+        feature = way_to_feature(element, {"road_status": status})
+        if feature:
+            features.append(feature)
     return collection(features, len(data.get("elements", [])))
 
 

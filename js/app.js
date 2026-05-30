@@ -3244,249 +3244,121 @@
         // Charger les données Bison Futé (Info Routière)
         setTimeout(loadBisonFuteData, 4000);
         
-        // ========== CHARGEMENT ROUTES EN CONSTRUCTION ==========
+        // ========== ROUTES EN CONSTRUCTION ==========
+
+        function classifyConstructionWay(tags) {
+            if (!tags) return null;
+            if (tags.highway === 'construction' || tags.construction === 'highway' || tags['construction:highway']) {
+                return 'construction';
+            }
+            if (tags.highway === 'proposed' || tags.proposed === 'highway' || tags['proposed:highway']) {
+                return 'proposed';
+            }
+            return tags.road_status === 'construction' || tags.road_status === 'proposed'
+                ? tags.road_status
+                : null;
+        }
         
         window.loadConstructionRoads = async function() {
             try {
-                console.log('🚧 === CHARGEMENT ROUTES EN CONSTRUCTION ===');
-                
-                console.log('📡 Chargement GeoJSON routes en construction...');
-                console.log('   Recherche : construction, proposed, et variantes');
-                console.log('   Zone : Vaucluse (84) + bbox élargi');
-                
                 const data = await window.InforouteApi.fetchGeoJson('construction-roads');
                 renderFreshnessBadge(document.getElementById('freshness-construction'), {
                     generatedAt: data._cache?.generated_at,
                     scheduleKey: 'osm'
                 });
                 syncLegendChrome();
+
                 const constructionWays = (data.features || [])
                     .map(geoJsonLineFeatureToWay)
                     .filter(Boolean);
-                
-                console.log('📦 GeoJSON routes en construction reçu:');
-                console.log('   Features:', constructionWays.length);
-                
-                if (constructionWays.length > 0) {
-                    console.log('   Exemples de tags:');
-                    constructionWays.slice(0, 3).forEach((el, i) => {
-                        console.log(`   Element ${i+1}:`, el.tags);
-                    });
-                }
-                
-                if (constructionWays.length === 0) {
-                    console.log('ℹ️ Aucune route en construction trouvée dans le GeoJSON local');
-                    document.getElementById('count-construction').textContent = '0';
-                    document.getElementById('count-proposed').textContent = '0';
-                    // Aucune donnée à afficher → on revient à l'état "masqué", l'utilisateur n'attend rien.
-                    constructionVisible = false;
-                    applyConstructionHiddenUi();
-                    L.popup({ closeButton: true, autoClose: true, closeOnClick: true })
-                        .setLatLng([44.0, 5.1])
-                        .setContent(`
-                            <div style="padding: 12px; text-align: center; max-width: 260px;">
-                                <strong>ℹ️ Aucune route en construction</strong><br>
-                                <small style="color: #666;">Le cache OSM ne contient actuellement aucun chantier en cours ou projet.</small>
-                            </div>
-                        `)
-                        .openOn(window.map);
-                    setTimeout(() => window.map.closePopup(), 4000);
-                    return;
-                }
-                
-                console.log(`✓ ${constructionWays.length} éléments chargés`);
-                
+
                 let constructionCount = 0;
                 let proposedCount = 0;
-                let skippedCount = 0;
-                
-                console.log('🔨 Début de traitement des éléments...');
-                
-                constructionWays.forEach((way, index) => {
-                    if (!way.geometry || way.geometry.length === 0) {
-                        skippedCount++;
-                        if (index < 3) console.log(`   ⚠️ Element ${index+1} sans géométrie, ignoré`);
-                        return;
-                    }
-                    
+
+                constructionWays.forEach(way => {
+                    if (!way.geometry || way.geometry.length === 0) return;
+
                     const coords = way.geometry.map(point => [point.lat, point.lon]);
                     const tags = way.tags || {};
-                    
-                    if (index < 3) {
-                        console.log(`   📍 Element ${index+1}:`, {
-                            id: way.id,
-                            highway: tags.highway,
-                            construction: tags.construction,
-                            proposed: tags.proposed,
-                            name: tags.name || tags.ref,
-                            coords: coords.length + ' points'
-                        });
-                    }
-                    
-                    // Déterminer le type et le style
-                    let color, weight, dashArray, statusLabel;
-                    
-                    if (tags.highway === 'construction' || tags.construction) {
-                        color = '#FF6B35';
-                        weight = 6;
-                        dashArray = '15, 10';
-                        statusLabel = '🚧 En construction';
-                        constructionCount++;
-                    } else if (tags.highway === 'proposed') {
-                        color = '#9B59B6';
-                        weight = 5;
-                        dashArray = '10, 15';
-                        statusLabel = '📋 En projet';
-                        proposedCount++;
-                    } else {
-                        return;
-                    }
-                    
-                    // Créer la polyline
+                    const status = classifyConstructionWay(tags);
+                    if (!status) return;
+
+                    const styles = status === 'construction'
+                        ? { color: '#FF6B35', weight: 6, dashArray: '15, 10', statusLabel: '🚧 En construction' }
+                        : { color: '#9B59B6', weight: 5, dashArray: '10, 15', statusLabel: '📋 En projet' };
+
+                    if (status === 'construction') constructionCount++;
+                    else proposedCount++;
+
                     const polyline = L.polyline(coords, {
-                        color: color,
-                        weight: weight,
+                        color: styles.color,
+                        weight: styles.weight,
                         opacity: 0.9,
-                        dashArray: dashArray
+                        dashArray: styles.dashArray
                     }).addTo(window.map);
-                    
+
                     constructionPolylines.push(polyline);
-                    
-                    if (index < 3) {
-                        console.log(`   ✅ Polyline ${index+1} créée et ajoutée:`, {
-                            color: color,
-                            weight: weight,
-                            status: statusLabel,
-                            coords: coords.length + ' points'
-                        });
-                    }
-                    
-                    // Préparer les informations pour le popup
-                    const futureType = tags.construction || tags.proposed || tags.highway || 'Route';
+
+                    const futureType = tags.construction || tags.proposed || tags['construction:highway'] || tags['proposed:highway'] || tags.highway || 'Route';
                     const name = tags.name || tags.ref || 'Sans nom';
                     const startDate = tags.start_date || tags['construction:start_date'] || 'Non renseignée';
                     const endDate = tags.end_date || tags['construction:end_date'] || tags.opening_date || 'Non renseignée';
                     const expectedOpening = tags.opening_date || tags['opening_date:expected'] || 'Non renseignée';
-                    
-                    // Popup enrichi
-                    const popupContent = `
+
+                    polyline.bindPopup(`
                         <div class="route-popup">
-                            <h3>${statusLabel}</h3>
-                            <div class="detail"><strong>Nom/Réf&nbsp;:</strong> ${name}</div>
-                            <div class="detail"><strong>Type futur&nbsp;:</strong> ${futureType.replace('_', ' ')}</div>
-                            
+                            <h3>${styles.statusLabel}</h3>
+                            <div class="detail"><strong>Nom/Réf&nbsp;:</strong> ${escapeHtml(name)}</div>
+                            <div class="detail"><strong>Type futur&nbsp;:</strong> ${escapeHtml(String(futureType).replace('_', ' '))}</div>
                             ${tags.description || tags['construction:description'] ? `
                                 <div class="detail" style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #FF6B35; border-radius: 4px; font-style: italic;">
-                                    ℹ️ ${tags.description || tags['construction:description']}
+                                    ℹ️ ${escapeHtml(tags.description || tags['construction:description'])}
                                 </div>
                             ` : ''}
-                            
                             <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #ddd;">
-                                ${startDate !== 'Non renseignée' ? `<div class="detail"><strong>🗓️ Début&nbsp;:</strong> ${startDate}</div>` : ''}
-                                ${endDate !== 'Non renseignée' ? `<div class="detail"><strong>🏁 Fin prévue&nbsp;:</strong> ${endDate}</div>` : ''}
-                                ${expectedOpening !== 'Non renseignée' ? `<div class="detail"><strong>🎉 Ouverture&nbsp;:</strong> ${expectedOpening}</div>` : ''}
+                                ${startDate !== 'Non renseignée' ? `<div class="detail"><strong>🗓️ Début&nbsp;:</strong> ${escapeHtml(startDate)}</div>` : ''}
+                                ${endDate !== 'Non renseignée' ? `<div class="detail"><strong>🏁 Fin prévue&nbsp;:</strong> ${escapeHtml(endDate)}</div>` : ''}
+                                ${expectedOpening !== 'Non renseignée' ? `<div class="detail"><strong>🎉 Ouverture&nbsp;:</strong> ${escapeHtml(expectedOpening)}</div>` : ''}
                             </div>
-                            
                             ${tags.operator || tags['construction:operator'] ? `
                                 <div class="detail" style="margin-top: 8px;">
-                                    <strong>🏗️ Maître d'ouvrage&nbsp;:</strong> ${tags.operator || tags['construction:operator']}
+                                    <strong>🏗️ Maître d'ouvrage&nbsp;:</strong> ${escapeHtml(tags.operator || tags['construction:operator'])}
                                 </div>
                             ` : ''}
-                            
-                            ${tags.note || tags['construction:note'] ? `
-                                <div class="detail" style="margin-top: 8px; font-size: 0.85rem; color: #666;">
-                                    📝 ${tags.note || tags['construction:note']}
-                                </div>
-                            ` : ''}
-                            
                             ${tags.website ? `
                                 <div class="detail" style="margin-top: 10px;">
-                                    <strong>🌐 Site web&nbsp;:</strong> 
-                                    <a href="${tags.website}" target="_blank" style="color: #3498DB; font-weight: 600; text-decoration: none;">
+                                    <strong>🌐 Site web&nbsp;:</strong>
+                                    <a href="${escapeHtml(tags.website)}" target="_blank" rel="noopener noreferrer" style="color: #3498DB; font-weight: 600; text-decoration: none;">
                                         Visiter le site du projet →
                                     </a>
                                 </div>
                             ` : ''}
-                            
-                            ${tags.wikidata ? `
-                                <div class="detail" style="margin-top: 8px;">
-                                    <strong>📚 Wikidata&nbsp;:</strong> 
-                                    <a href="https://www.wikidata.org/wiki/${tags.wikidata}" target="_blank" style="color: #3498DB; font-weight: 600;">
-                                        ${tags.wikidata} →
-                                    </a>
-                                </div>
-                            ` : ''}
-                            
                             <div class="detail" style="margin-top: 12px; padding-top: 12px; border-top: 2px solid #e0e0e0;">
-                                <a href="https://www.openstreetmap.org/way/${way.id}" target="_blank" style="color: #3498DB; font-weight: 600; text-decoration: none;">
+                                <a href="https://www.openstreetmap.org/way/${way.id}" target="_blank" rel="noopener noreferrer" style="color: #3498DB; font-weight: 600; text-decoration: none;">
                                     🗺️ Voir sur OpenStreetMap →
                                 </a>
                             </div>
                         </div>
-                    `;
-                    
-                    polyline.bindPopup(popupContent);
-                    
-                    // Effet hover
+                    `);
+
                     polyline.on('mouseover', function() {
-                        this.setStyle({ weight: weight + 2, opacity: 1 });
+                        this.setStyle({ weight: styles.weight + 2, opacity: 1 });
                     });
-                    
                     polyline.on('mouseout', function() {
-                        this.setStyle({ weight: weight, opacity: 0.9 });
+                        this.setStyle({ weight: styles.weight, opacity: 0.9 });
                     });
                 });
-                
-                // Mettre à jour les compteurs
-                document.getElementById('count-construction').textContent = constructionCount;
-                document.getElementById('count-proposed').textContent = proposedCount;
-                
-                const totalConstruction = constructionCount + proposedCount;
-                
-                console.log(`📊 RÉSUMÉ construction : ${constructionCount} en travaux, ${proposedCount} projets, ${skippedCount} ignorés. Polylines : ${constructionPolylines.length}.`);
 
-                if (totalConstruction > 0) {
-                    applyConstructionVisibleUi();
-                    // Petit toast discret (~2,5 s) plutôt qu'un popup verrouillé sur 5 s.
-                    L.popup({ closeButton: false, autoClose: true, closeOnClick: true })
-                        .setLatLng([44.0, 5.1])
-                        .setContent(`
-                            <div style="padding: 10px 14px; text-align: center; font-size: 0.85rem;">
-                                <strong>🚧 ${totalConstruction} voie(s) affichée(s)</strong><br>
-                                <small><span style="color: #FF6B35;">${constructionCount} en construction</span> · <span style="color: #9B59B6;">${proposedCount} projet(s)</span></small>
-                            </div>
-                        `)
-                        .openOn(window.map);
-                    setTimeout(() => window.map.closePopup(), 2500);
-                } else {
-                    constructionVisible = false;
-                    applyConstructionHiddenUi();
-                }
-
-                console.log('🚧 === FIN CHARGEMENT ROUTES EN CONSTRUCTION ===');
-
+                document.getElementById('count-construction').textContent = String(constructionCount);
+                document.getElementById('count-proposed').textContent = String(proposedCount);
+                applyConstructionVisibleUi();
             } catch (error) {
-                console.error('❌ Erreur chargement routes en construction:', error);
-
-                constructionVisible = false;
-                applyConstructionHiddenUi();
-
-                L.popup({ closeButton: true, autoClose: true, closeOnClick: true })
-                    .setLatLng([44.0, 5.1])
-                    .setContent(`
-                        <div style="padding: 12px; text-align: center;">
-                            <div style="font-size: 1.5rem; color: #E74C3C;">⚠️</div>
-                            <strong>Erreur de chargement</strong><br>
-                            <small style="color: #666;">${error.message}</small>
-                        </div>
-                    `)
-                    .openOn(window.map);
-                setTimeout(() => window.map.closePopup(), 3500);
-
+                console.error('Erreur chargement routes en construction:', error);
                 document.getElementById('count-construction').textContent = '0';
                 document.getElementById('count-proposed').textContent = '0';
+                applyConstructionVisibleUi();
             }
-        }
+        };
 
         window.loadBicycleRoutes = async function() {
             try {

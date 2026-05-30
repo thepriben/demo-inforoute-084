@@ -50,7 +50,7 @@ La page indique les données externes rafraîchies toutes les 3 heures. Le navig
 | Donnée | Source | Millésime ou fraîcheur | Commentaire |
 | --- | --- | --- | --- |
 | Routes départementales | OpenStreetMap | cache du 2026-05-17 22:52 UTC | Données réseau, pas un millésime administratif CD84. |
-| Routes en construction | OpenStreetMap | cache du 2026-05-17 22:53 UTC | Quelques ouvertures indiquées entre 2025 et 2027 selon les tags OSM. |
+| Routes en construction | OpenStreetMap | cache hebdomadaire (lundi 03:17 UTC) | Ways `highway=construction` ou `highway=proposed` (et variantes) dans le 84. |
 | Véloroutes | OpenStreetMap | cache hebdomadaire (lundi 03:17 UTC) | Relations `route=bicycle` du département. |
 | Communes | OpenStreetMap | cache du 2026-05-17 22:53 UTC | 151 communes ; les tags de population pointent vers 2021. |
 | Limite du Vaucluse | OpenStreetMap | GeoJSON local | Limite départementale 84, figée dans `data/static/`. |
