@@ -98,6 +98,7 @@ def cmd_release(version: str | None, draft: bool, skip_existing: bool, notes_fil
         tag,
         "--notes",
         notes,
+        "--latest",
     ]
     if draft:
         command.append("--draft")
