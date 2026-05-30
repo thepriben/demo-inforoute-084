@@ -56,8 +56,8 @@ def prompt_macos_hidden(prompt: str) -> str:
         'display dialog '
         + json.dumps(prompt)
         + ' default answer "" with hidden answer '
-        + 'buttons {"Annuler", "OK"} default button "OK" '
-        + 'with title "Publication GitHub Pages"'
+        + 'buttons {"Cancel", "OK"} default button "OK" '
+        + 'with title "GitHub Pages publish"'
     )
     result = subprocess.run(["osascript", "-e", script], text=True, capture_output=True, check=False)
 
@@ -80,32 +80,32 @@ def main() -> int:
     owner = args.owner
     if args.gui:
         token = prompt_macos_hidden(
-            "Collez un token GitHub, pas votre mot de passe. "
-            "Token classique: scopes repo + workflow."
+            "Paste a GitHub token (not your password). "
+            "Classic token scopes: repo + workflow."
         )
     else:
-        owner = input(f"Compte GitHub [{DEFAULT_OWNER}]: ").strip() or DEFAULT_OWNER
-        token = getpass.getpass("Token GitHub (masque, pas le mot de passe): ").strip()
+        owner = input(f"GitHub account [{DEFAULT_OWNER}]: ").strip() or DEFAULT_OWNER
+        token = getpass.getpass("GitHub token (hidden, not your password): ").strip()
 
     if not token:
-        print("Aucun token fourni, arret.")
+        print("No token provided, aborting.")
         return 1
 
     code, user = github_request(token, "GET", "/user")
     if code != 200:
-        print(f"Authentification GitHub refusee: {api_message(user)}")
+        print(f"GitHub authentication failed: {api_message(user)}")
         return 1
 
     login = user.get("login")
-    print(f"Authentifie comme {login}.")
+    print(f"Authenticated as {login}.")
     if login and login.lower() != owner.lower():
-        print(f"Attention: le token appartient a {login}, publication demandee sous {owner}.")
+        print(f"Warning: token belongs to {login}, publishing under {owner}.")
 
     repo_path = f"/repos/{owner}/{REPO}"
     code, repo = github_request(token, "GET", repo_path)
 
     if code == 200:
-        print(f"Depot deja present: {repo.get('html_url')}")
+        print(f"Repository already exists: {repo.get('html_url')}")
     elif code == 404:
         code, repo = github_request(
             token,
@@ -113,7 +113,7 @@ def main() -> int:
             "/user/repos",
             {
                 "name": REPO,
-                "description": "Prototype cartographique statique Inforoute 084",
+                "description": "Static web map for the Vaucluse (FR-84) departmental road network — CD84 Inforoute prototype",
                 "private": False,
                 "auto_init": False,
                 "has_issues": True,
@@ -122,11 +122,11 @@ def main() -> int:
             },
         )
         if code != 201:
-            print(f"Creation du depot impossible: {api_message(repo)}")
+            print(f"Could not create repository: {api_message(repo)}")
             return 1
-        print(f"Depot cree: {repo.get('html_url')}")
+        print(f"Repository created: {repo.get('html_url')}")
     else:
-        print(f"Verification du depot impossible: {api_message(repo)}")
+        print(f"Could not verify repository: {api_message(repo)}")
         return 1
 
     subprocess.run(["git", "remote", "set-url", "origin", f"https://github.com/{owner}/{REPO}.git"], check=True)
@@ -137,34 +137,34 @@ def main() -> int:
         check=True,
     )
 
-    print("Push de main vers GitHub...")
+    print("Pushing main to GitHub...")
     subprocess.run(["git", "push", "-u", "origin", "main"], check=True)
 
     pages_path = f"{repo_path}/pages"
     code, pages = github_request(token, "GET", pages_path)
 
     if code == 200:
-        print(f"GitHub Pages deja actif: {pages.get('html_url')}")
+        print(f"GitHub Pages already active: {pages.get('html_url')}")
     else:
         code, pages = github_request(token, "POST", pages_path, {"build_type": "workflow"})
         if code not in (201, 202):
             check_code, check_pages = github_request(token, "GET", pages_path)
             if check_code == 200:
                 pages = check_pages
-                print(f"GitHub Pages actif: {pages.get('html_url')}")
+                print(f"GitHub Pages active: {pages.get('html_url')}")
             else:
-                print(f"Activation GitHub Pages impossible: {api_message(pages)}")
+                print(f"Could not enable GitHub Pages: {api_message(pages)}")
                 return 1
         else:
-            print("GitHub Pages active en mode GitHub Actions.")
+            print("GitHub Pages enabled (GitHub Actions build).")
 
     code, pages = github_request(token, "GET", pages_path)
     if code == 200:
-        print(f"URL GitHub Pages: {pages.get('html_url')}")
-        print(f"Statut Pages: {pages.get('status', 'inconnu')} / build_type={pages.get('build_type', 'inconnu')}")
+        print(f"GitHub Pages URL: {pages.get('html_url')}")
+        print(f"Pages status: {pages.get('status', 'unknown')} / build_type={pages.get('build_type', 'unknown')}")
 
-    print(f"Depot GitHub: https://github.com/{owner}/{REPO}")
-    print("Termine cote publication initiale. Le workflow Pages peut prendre une ou deux minutes.")
+    print(f"GitHub repository: https://github.com/{owner}/{REPO}")
+    print("Initial publish complete. The Pages workflow may take one or two minutes.")
     return 0
 
 

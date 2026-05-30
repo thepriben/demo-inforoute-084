@@ -124,5 +124,5 @@ def changelog_section(version: str) -> str | None:
     slug = github_repo_slug()
     return (
         f"{body}\n\n"
-        f"Voir le [CHANGELOG complet](https://github.com/{slug}/blob/main/CHANGELOG.md)."
+        f"See the [full CHANGELOG](https://github.com/{slug}/blob/main/CHANGELOG.md)."
     )

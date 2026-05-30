@@ -1,3 +1,11 @@
+/**
+ * @file dataroads-FR84 application configuration.
+ * @description Static web map for the Vaucluse (FR-84) departmental road network.
+ *   Centralizes GeoJSON paths, semver, repository URL, and live API endpoints.
+ *   Consumed by {@link InforouteApi} and the map bootstrap in app.js.
+ * @see https://thepriben.github.io/dataroads-FR84/
+ * @see https://github.com/thepriben/dataroads-FR84
+ */
 (function (window) {
     'use strict';
 
@@ -5,7 +13,7 @@
 
     window.APP_CONFIG = Object.freeze({
         appName: 'dataroads-FR84',
-        version: '0.2.0',
+        version: '0.2.1',
         repository,
         data: {
             externalRefreshHours: 3,

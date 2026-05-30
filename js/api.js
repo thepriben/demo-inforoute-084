@@ -1,3 +1,11 @@
+/**
+ * @file dataroads-FR84 data access layer.
+ * @description Browser-side loader for versioned GeoJSON caches and live JSON
+ *   endpoints declared in {@link APP_CONFIG}. Provides in-memory caching so
+ *   repeated layer toggles do not re-fetch files.
+ * @namespace InforouteApi
+ * @see config.js
+ */
 (function (window) {
     'use strict';
 

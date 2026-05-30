@@ -1,4 +1,14 @@
-        // Fonctions globales accessibles depuis le HTML
+        /**
+         * @file dataroads-FR84 map application.
+         * @description Leaflet-based interactive map for the Vaucluse departmental
+         *   road network. Layers, legend, freshness badges, OSM quality panel, and
+         *   popups. UI strings are in French (CD84 target audience).
+         * @requires APP_CONFIG
+         * @requires InforouteApi
+         * @see https://github.com/thepriben/dataroads-FR84
+         */
+
+        // Global functions exposed to inline HTML handlers
 
         // Icônes SVG pour les toggles œil ouvert / fermé (style Lucide)
         const EYE_OPEN_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
