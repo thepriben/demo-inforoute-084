@@ -81,3 +81,48 @@ def changelog_has_version(version: str) -> bool:
         return False
     heading = f"## [{version}]"
     return heading in CHANGELOG.read_text(encoding="utf-8")
+
+
+def github_repo_slug() -> str:
+    repo = REPOSITORY.rstrip("/")
+    if repo.endswith(".git"):
+        repo = repo[:-4]
+    prefix = "https://github.com/"
+    if repo.startswith(prefix):
+        return repo[len(prefix) :]
+    return os.environ.get("GITHUB_REPOSITORY", "thepriben/dataroads-FR84")
+
+
+def changelog_section(version: str) -> str | None:
+    if not CHANGELOG.exists():
+        return None
+
+    heading = f"## [{version}]"
+    text = CHANGELOG.read_text(encoding="utf-8")
+    start_idx = text.find(heading)
+    if start_idx == -1:
+        return None
+
+    body_start = text.find("\n", start_idx)
+    if body_start == -1:
+        return None
+    body_start += 1
+
+    next_heading = text.find("\n## [", body_start)
+    section = text[body_start:next_heading if next_heading != -1 else len(text)]
+
+    lines: list[str] = []
+    for line in section.splitlines():
+        if line.startswith("[") and "]: http" in line:
+            break
+        lines.append(line)
+
+    body = "\n".join(lines).strip()
+    if not body:
+        return None
+
+    slug = github_repo_slug()
+    return (
+        f"{body}\n\n"
+        f"Voir le [CHANGELOG complet](https://github.com/{slug}/blob/main/CHANGELOG.md)."
+    )

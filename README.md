@@ -102,6 +102,9 @@ python3 scripts/bump_version.py sync
 
 # Incrémenter (minor / patch / major), puis mettre à jour CHANGELOG.md
 python3 scripts/bump_version.py bump minor
+
+# Après commit, push et tag git vX.Y.Z — publier la GitHub Release (colonne Releases)
+python3 scripts/bump_version.py release
 ```
 
 Historique des versions : [`CHANGELOG.md`](CHANGELOG.md).
